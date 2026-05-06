@@ -22,10 +22,20 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     bcmath \
     zip
 
-# Povolenie Apache mod_rewrite
-RUN a2enmod rewrite
+# Stiahnutie a inštalácia ChurchCRM 7.3.1
+ENV CHURCHCRM_VERSION=7.3.1
+RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/download/${CHURCHCRM_VERSION}/ChurchCRM-${CHURCHCRM_VERSION}.zip \
+    && unzip /tmp/churchcrm.zip -d /tmp/ \
+    && rm -rf /var/www/html/* \
+    && cp -R /tmp/churchcrm/* /var/www/html/ \
+    && rm -rf /tmp/churchcrm /tmp/churchcrm.zip
 
-# Nastavenie odporúčaných PHP hodnôt pre ChurchCRM
+# Povolenie Apache mod_rewrite a nastavenie práv
+RUN a2enmod rewrite \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html
+
+# Nastavenie odporúčaných PHP hodnôt
 RUN { \
     echo 'memory_limit=512M'; \
     echo 'upload_max_filesize=100M'; \
@@ -34,14 +44,5 @@ RUN { \
     echo 'date.timezone=Europe/Bratislava'; \
     } > /usr/local/etc/php/conf.d/churchcrm-limits.ini
 
-# Stiahnutie a inštalácia ChurchCRM 7.3.1
-ENV CHURCHCRM_VERSION 7.3.1
-RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/download/${CHURCHCRM_VERSION}/ChurchCRM-${CHURCHCRM_VERSION}.zip \
-    && unzip /tmp/churchcrm.zip -d /tmp/ \
-    && cp -R /tmp/churchcrm/* /var/www/html/ \
-    && chown -R www-data:www-data /var/www/html \
-    && rm -rf /tmp/churchcrm /tmp/churchcrm.zip
-
 WORKDIR /var/www/html
-
 EXPOSE 80
