@@ -1,36 +1,41 @@
 FROM php:8.4-apache
 
-# Inštalácia systémových závislostí
+# Metadata [SK: Metadáta obrazu]
+LABEL maintainer="kolumbus120 (with AI)"
+LABEL description="Modernized ChurchCRM Docker image with PHP 8.4, Apache and automatic updates"
+LABEL version="7.3.1"
+
+# Install system dependencies [SK: Inštalácia systémových závislostí]
 RUN apt-get update && apt-get install -y \
-    libicu-dev \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libzip-dev \
-    libonig-dev \
-    libcurl4-openssl-dev \
-    libxml2-dev \
-    gettext \
-    unzip \
     curl \
+    gettext \
+    libcurl4-openssl-dev \
+    libfreetype6-dev \
+    libicu-dev \
+    libjpeg-dev \
+    libonig-dev \
+    libpng-dev \
+    libxml2-dev \
+    libzip-dev \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Konfigurácia a inštalácia PHP rozšírení (všetky požiadované ChurchCRM 7.3.1)
+# Install PHP extensions [SK: Inštalácia PHP rozšírení]
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-    pdo_mysql \
-    mysqli \
+    bcmath \
     curl \
     gd \
     gettext \
-    mbstring \
-    bcmath \
-    zip \
     intl \
+    mbstring \
+    mysqli \
+    pdo_mysql \
+    soap \
     xml \
-    soap
+    zip
 
-# Stiahnutie a inštalácia ChurchCRM (verzia sa dá predefinovať pri builde)
+# Download and install ChurchCRM [SK: Stiahnutie a inštalácia ChurchCRM]
 ARG CHURCHCRM_VERSION=7.3.1
 ENV CHURCHCRM_VERSION=${CHURCHCRM_VERSION}
 RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/download/${CHURCHCRM_VERSION}/ChurchCRM-${CHURCHCRM_VERSION}.zip \
@@ -39,12 +44,12 @@ RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/down
     && cp -R /tmp/churchcrm/* /var/www/html/ \
     && rm -rf /tmp/churchcrm /tmp/churchcrm.zip
 
-# Povolenie Apache mod_rewrite a nastavenie práv
+# Enable Apache mod_rewrite and set permissions [SK: Povolenie Apache mod_rewrite a nastavenie práv]
 RUN a2enmod rewrite \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
-# Nastavenie odporúčaných PHP hodnôt
+# Set recommended PHP values [SK: Nastavenie odporúčaných PHP hodnôt]
 RUN { \
     echo 'memory_limit=512M'; \
     echo 'upload_max_filesize=100M'; \
@@ -56,3 +61,7 @@ RUN { \
 
 WORKDIR /var/www/html
 EXPOSE 80
+
+# Healthcheck [SK: Kontrola zdravia kontajnera]
+HEALTHCHECK --interval=1m --timeout=3s --start-period=30s \
+  CMD curl -f http://localhost/ || exit 1
