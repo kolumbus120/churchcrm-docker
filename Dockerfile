@@ -7,21 +7,28 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
+    libonig-dev \
+    libcurl4-openssl-dev \
+    libxml2-dev \
     gettext \
     unzip \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Konfigurácia a inštalácia PHP rozšírení
+# Konfigurácia a inštalácia PHP rozšírení (všetky požiadované ChurchCRM 7.3.1)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-    mysqli \
     pdo_mysql \
-    intl \
+    mysqli \
+    curl \
     gd \
     gettext \
+    mbstring \
     bcmath \
-    zip
+    zip \
+    intl \
+    xml \
+    soap
 
 # Stiahnutie a inštalácia ChurchCRM (verzia sa dá predefinovať pri builde)
 ARG CHURCHCRM_VERSION=7.3.1
@@ -43,6 +50,7 @@ RUN { \
     echo 'upload_max_filesize=100M'; \
     echo 'post_max_size=100M'; \
     echo 'max_execution_time=300'; \
+    echo 'short_open_tag=On'; \
     echo 'date.timezone=Europe/Bratislava'; \
     } > /usr/local/etc/php/conf.d/churchcrm-limits.ini
 
