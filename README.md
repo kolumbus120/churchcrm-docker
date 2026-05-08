@@ -1,26 +1,323 @@
-# ChurchCRM Docker (Modernized)
+# ChurchCRM Docker
 
-Tento projekt poskytuje moderný a bezpečný Docker image pre [ChurchCRM](https://churchcrm.io) verziu 7.3.1, pripravený pre nasadenie na TrueNAS.
+[![Docker Hub](https://img.shields.io/docker/pulls/thasko/churchcrm.svg)](https://hub.docker.com/r/thasko/churchcrm)
+[![Docker Hub Stars](https://img.shields.io/docker/stars/thasko/churchcrm.svg)](https://hub.docker.com/r/thasko/churchcrm)
+[![Image Size](https://img.shields.io/docker/image-size/thasko/churchcrm/latest.svg)](https://hub.docker.com/r/thasko/churchcrm)
+[![Latest Version](https://img.shields.io/docker/v/thasko/churchcrm/latest.svg)](https://hub.docker.com/r/thasko/churchcrm)
+[![Build Status](https://gitea.serigrafika.sk/thasko/churchcrm-docker/workflows/build-and-push/badge.svg)](https://gitea.serigrafika.sk/thasko/churchcrm-docker/actions)
 
-## Čo je nové?
-- **PHP 8.4 Apache**: Aktuálna verzia PHP vyžadovaná najnovším zdrojovým kódom ChurchCRM.
-- **MariaDB 11.4**: Moderná verzia databázy.
-- **Debian Bookworm**: Stabilný základ pre moderné knižnice.
-- **Optimalizované rozšírenia**: Obsahuje `mysqli`, `intl`, `gd`, `gettext`, `zip`, `bcmath`.
-- **Zabezpečenie**: Predkonfigurovaný Apache s povoleným `mod_rewrite`.
+**Modern Docker image for [ChurchCRM](https://churchcrm.io) with automatic updates.**
 
-## Gitea Registry
-Image je dostupný v našej privátnej Gitea registry:
-`git.serigrafika.sk/thasko/churchcrm-docker-modern:7.3.1`
+This Docker image provides a fully functional ChurchCRM installation with:
+- **PHP 8.4** + Apache with all required extensions
+- **MariaDB 11.4** support (via docker-compose)
+- **Automatic updates** when new ChurchCRM versions are released
+- **Security patches** automatically applied from Docker Hub base images
+- **Multi-architecture** support (amd64, arm64)
 
-## Nasadenie na TrueNAS (Custom App)
+---
 
-1. V TrueNAS UI choďte do **Apps** -> **Discover Apps** -> **Custom App**.
-2. Použite YAML konfiguráciu zo súboru `deploy/truenas-custom-app.yaml`.
-3. Upravte cesty k volume podľa vášho poolu (napr. `/mnt/pool/apps/churchcrm/db`).
+## 🚀 Quick Start
 
-## Build príkazy (lokálne)
+### Using Docker Run
 ```bash
-docker build -t git.serigrafika.sk/thasko/churchcrm-docker-modern:7.3.1 .
-docker push git.serigrafika.sk/thasko/churchcrm-docker-modern:7.3.1
+docker run -d \
+  --name churchcrm \
+  -p 8080:80 \
+  -e MYSQL_DB_HOST=mysql \
+  -e MYSQL_DB_NAME=churchcrm \
+  -e MYSQL_DB_USER=churchcrm \
+  -e MYSQL_DB_PASSWORD=your_password \
+  thasko/churchcrm:latest
 ```
+
+### Using Docker Compose
+See [docker-compose.yml](docker-compose.yml) for a complete setup with MariaDB.
+
+```bash
+# Clone this repository
+git clone https://gitea.serigrafika.sk/thasko/churchcrm-docker.git
+cd churchcrm-docker
+
+# Create .env file (copy from .env.example)
+cp .env.example .env
+
+# Edit .env with your credentials
+nano .env
+
+# Start containers
+docker-compose up -d
+```
+
+Access ChurchCRM at: **http://localhost:8080**
+
+---
+
+## 📦 Available Tags
+
+| Tag | Description |
+|-----|-------------|
+| `latest` | Latest stable version (auto-updates) |
+| `7.3.1` | Specific ChurchCRM version |
+| `2024-05-15` | Build date (YYYY-MM-DD format) |
+
+For all available tags, see: [Docker Hub Tags](https://hub.docker.com/r/thasko/churchcrm/tags)
+
+---
+
+## 🔄 Automatic Updates
+
+This image is **automatically updated** in the following cases:
+
+1. **New ChurchCRM release** - Pipeline checks GitHub releases daily and rebuilds with the latest version
+2. **PHP security patches** - Base image (php:8.4-apache) is automatically updated on Docker Hub
+3. **OS security patches** - Debian base image receives automatic security updates
+
+### How to Get Updates
+
+#### Option 1: Use `:latest` tag (recommended for testing)
+```yaml
+services:
+  churchcrm:
+    image: thasko/churchcrm:latest
+```
+
+#### Option 2: Manual update (recommended for production)
+```bash
+# Pull new image
+docker-compose pull churchcrm
+
+# Recreate container with new image
+docker-compose up -d --force-recreate
+```
+
+#### Option 3: Use Watchtower for automatic updates
+```yaml
+services:
+  churchcrm:
+    image: thasko/churchcrm:latest
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=86400 # Check every 24 hours
+```
+
+---
+
+## 📊 Comparison with Official ChurchCRM Docker Image
+
+| Feature | [churchcrm/crm](https://hub.docker.com/r/churchcrm/crm) | thasko/churchcrm |
+|---------|--------------------------------------------------------|------------------|
+| PHP Version | 5.6 | **8.4** |
+| Auto-updates | ❌ No | **✅ Yes** |
+| Security Patches | ❌ No | **✅ Yes** |
+| Multi-arch | ❌ No | **✅ Yes** (amd64, arm64) |
+| Last Update | 2020 | **Daily** |
+| Maintenance | ❌ Abandoned | **✅ Active** |
+
+---
+
+## 📂 Project Structure
+
+```
+churchcrm-docker/
+├── Dockerfile              # Docker image definition
+├── docker-compose.yml     # Full setup with MariaDB
+├── .env.example            # Environment variables template
+├── README.md               # Project documentation
+├── CI-CD.md               # CI/CD pipeline documentation
+├── CO_UROBIT.md           # Setup instructions
+├── .gitea/workflows/
+│   └── build-and-push.yml  # Gitea Actions workflow
+├── .github/workflows/
+│   └── build-and-push.yml  # GitHub Actions workflow (fallback)
+└── scripts/
+    └── check-updates.sh    # Manual update checker
+```
+
+---
+
+## 🛠️ Configuration
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MYSQL_DB_HOST` | `churchcrm-db` | MySQL/MariaDB host |
+| `MYSQL_DB_NAME` | `churchcrm` | Database name |
+| `MYSQL_DB_USER` | `churchcrm` | Database user |
+| `MYSQL_DB_PASSWORD` | - | Database password (required) |
+| `MYSQL_ROOT_PASSWORD` | - | MySQL root password (required) |
+
+### Volumes (for persistent data)
+
+For production use, you should mount volumes for persistent data:
+
+```yaml
+services:
+  churchcrm:
+    volumes:
+      - ./data/config:/var/www/html/config
+      - ./data/images:/var/www/html/images
+      - ./data/backup:/var/www/html/backup
+  churchcrm-db:
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+```
+
+| Volume | Description | Recommended |
+|--------|-------------|-------------|
+| `/var/www/html/config/` | ChurchCRM configuration | ✅ Yes |
+| `/var/www/html/images/` | Uploaded images | ✅ Yes |
+| `/var/www/html/backup/` | Backups | ⚠️ Optional |
+| `/var/lib/mysql/` | MySQL/MariaDB data | ✅ Yes |
+
+---
+
+## 📝 First Time Setup
+
+### 1. Initial Installation
+After starting the containers:
+
+1. Open your browser and navigate to `http://localhost:8080` (or your configured port)
+2. Follow the ChurchCRM installation wizard
+3. Enter your database connection details (from docker-compose.yml)
+
+### 2. Database Configuration
+Use these values for the installation:
+- **Database Host:** `churchcrm-db` (or your container name)
+- **Database Name:** `churchcrm` (from .env file)
+- **Database User:** `churchcrm` (from .env file)
+- **Database Password:** [from your .env file]
+
+---
+
+## 🔧 Advanced Configuration
+
+### Custom PHP Settings
+You can override PHP settings by mounting a custom `php.ini` file:
+
+```yaml
+services:
+  churchcrm:
+    volumes:
+      - ./custom-php.ini:/usr/local/etc/php/conf.d/custom.ini
+```
+
+### Custom Apache Configuration
+To add custom Apache configuration:
+
+```yaml
+services:
+  churchcrm:
+    volumes:
+      - ./custom-apache.conf:/etc/apache2/conf-available/custom.conf
+```
+
+Then enable it in your Dockerfile or entrypoint script.
+
+---
+
+## 🛡️ Security Best Practices
+
+1. **Always use specific tags** in production (not `:latest`)
+2. **Backup your database** before upgrading
+3. **Use strong passwords** for MySQL
+4. **Keep your image updated** to receive security patches
+5. **Use HTTPS** in production with a reverse proxy
+
+### Example with Nginx Reverse Proxy
+```yaml
+services:
+  churchcrm:
+    image: thasko/churchcrm:latest
+    # ... other config
+  
+  nginx:
+    image: nginx
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - /path/to/ssl/cert.pem:/etc/nginx/ssl/cert.pem
+      - /path/to/ssl/key.pem:/etc/nginx/ssl/key.pem
+    depends_on:
+      - churchcrm
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### White page / 500 error
+```bash
+# Check Apache logs
+docker logs churchcrm-app
+
+# Check PHP error log
+docker exec churchcrm-app cat /var/log/apache2/error.log
+```
+
+#### Database connection failed
+- Verify database container is running: `docker ps`
+- Check database credentials in .env file
+- Test connection: `docker exec churchcrm-app ping churchcrm-db`
+
+#### Image not updating
+```bash
+# Force pull new image
+docker-compose pull churchcrm
+
+# Recreate container
+docker-compose up -d --force-recreate
+```
+
+#### Permission issues
+```bash
+# Fix permissions (if using volumes)
+docker exec churchcrm-app chown -R www-data:www-data /var/www/html
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please open an issue or pull request on [Gitea](https://gitea.serigrafika.sk/thasko/churchcrm-docker).
+
+### How to Contribute
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+---
+
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+---
+
+## 🙏 Acknowledgments
+
+- [ChurchCRM](https://churchcrm.io) - The original project
+- [Docker](https://docker.com) - Container platform
+- [Gitea](https://gitea.io) - Git service
+- [MariaDB](https://mariadb.org) - Database server
+- [PHP](https://php.net) - Programming language
+
+---
+
+## 📞 Support
+
+For support, please open an issue on [Gitea](https://gitea.serigrafika.sk/thasko/churchcrm-docker/issues).
+
+---
+
+**Maintained by:** [thasko](https://gitea.serigrafika.sk/thasko)
+
+*Last updated: 2024-05-15*
