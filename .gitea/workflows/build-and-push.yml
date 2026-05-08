@@ -64,16 +64,6 @@ jobs:
           tags: |
             ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_USER }}/churchcrm-docker:latest
             ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_USER }}/churchcrm-docker:${{ steps.churchcrm_version.outputs.version }}
-            ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_USER }}/churchcrm-docker:${{ steps.date.outputs.date }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:latest
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.churchcrm_version.outputs.version }}
-            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.date.outputs.date }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # 8. Vypísanie informácií o build
-      - name: Print build info
-        run: |
-          echo "✅ Docker image built and pushed!"
-          echo "ChurchCRM version: ${{ steps.churchcrm_version.outputs.version }}"
-          echo "Date: ${{ steps.date.outputs.date }}"
+          # ODSTRÁNENÁ CACHE PRE STABILITU
