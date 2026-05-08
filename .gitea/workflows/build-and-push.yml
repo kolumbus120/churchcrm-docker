@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu
     steps:
       # 1. Checkout repozitár
       - name: Checkout repository
