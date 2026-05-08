@@ -1,5 +1,7 @@
 # Credentials and sensitive info
 CREDENTIALS.md
+.claude/
+.gemini/
 .env
 *.sql
 *.log

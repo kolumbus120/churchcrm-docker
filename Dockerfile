@@ -22,8 +22,9 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     bcmath \
     zip
 
-# Stiahnutie a inštalácia ChurchCRM 7.3.1
-ENV CHURCHCRM_VERSION=7.3.1
+# Stiahnutie a inštalácia ChurchCRM (verzia sa dá predefinovať pri builde)
+ARG CHURCHCRM_VERSION=7.3.1
+ENV CHURCHCRM_VERSION=${CHURCHCRM_VERSION}
 RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/download/${CHURCHCRM_VERSION}/ChurchCRM-${CHURCHCRM_VERSION}.zip \
     && unzip /tmp/churchcrm.zip -d /tmp/ \
     && rm -rf /var/www/html/* \
