@@ -1,10 +1,10 @@
 # ChurchCRM Docker
 
-[![Docker Hub](https://img.shields.io/docker/pulls/thasko/churchcrm.svg)](https://hub.docker.com/r/thasko/churchcrm)
-[![Docker Hub Stars](https://img.shields.io/docker/stars/thasko/churchcrm.svg)](https://hub.docker.com/r/thasko/churchcrm)
-[![Image Size](https://img.shields.io/docker/image-size/thasko/churchcrm/latest.svg)](https://hub.docker.com/r/thasko/churchcrm)
-[![Latest Version](https://img.shields.io/docker/v/thasko/churchcrm/latest.svg)](https://hub.docker.com/r/thasko/churchcrm)
-[![Build Status](https://gitea.serigrafika.sk/thasko/churchcrm-docker/workflows/build-and-push/badge.svg)](https://gitea.serigrafika.sk/thasko/churchcrm-docker/actions)
+[![Docker Hub](https://img.shields.io/docker/pulls/kolumbus120/churchcrm.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
+[![Docker Hub Stars](https://img.shields.io/docker/stars/kolumbus120/churchcrm.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
+[![Image Size](https://img.shields.io/docker/image-size/kolumbus120/churchcrm/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
+[![Latest Version](https://img.shields.io/docker/v/kolumbus120/churchcrm/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
+[![Build Status](https://gitea.serigrafika.sk/kolumbus120/churchcrm-docker/workflows/build-and-push/badge.svg)](https://gitea.serigrafika.sk/kolumbus120/churchcrm-docker/actions)
 
 **Modern Docker image for [ChurchCRM](https://churchcrm.io) with automatic updates.**
 
@@ -28,7 +28,7 @@ docker run -d \
   -e MYSQL_DB_NAME=churchcrm \
   -e MYSQL_DB_USER=churchcrm \
   -e MYSQL_DB_PASSWORD=your_password \
-  thasko/churchcrm:latest
+  kolumbus120/churchcrm:latest
 ```
 
 ### Using Docker Compose
@@ -36,7 +36,7 @@ See [docker-compose.yml](docker-compose.yml) for a complete setup with MariaDB.
 
 ```bash
 # Clone this repository
-git clone https://gitea.serigrafika.sk/thasko/churchcrm-docker.git
+git clone https://gitea.serigrafika.sk/kolumbus120/churchcrm-docker.git
 cd churchcrm-docker
 
 # Create .env file (copy from .env.example)
@@ -61,7 +61,7 @@ Access ChurchCRM at: **http://localhost:8080**
 | `7.3.1` | Specific ChurchCRM version |
 | `2024-05-15` | Build date (YYYY-MM-DD format) |
 
-For all available tags, see: [Docker Hub Tags](https://hub.docker.com/r/thasko/churchcrm/tags)
+For all available tags, see: [Docker Hub Tags](https://hub.docker.com/r/kolumbus120/churchcrm/tags)
 
 ---
 
@@ -79,7 +79,7 @@ This image is **automatically updated** in the following cases:
 ```yaml
 services:
   churchcrm:
-    image: thasko/churchcrm:latest
+    image: kolumbus120/churchcrm:latest
 ```
 
 #### Option 2: Manual update (recommended for production)
@@ -95,7 +95,7 @@ docker-compose up -d --force-recreate
 ```yaml
 services:
   churchcrm:
-    image: thasko/churchcrm:latest
+    image: kolumbus120/churchcrm:latest
   watchtower:
     image: containrrr/watchtower
     volumes:
@@ -108,7 +108,7 @@ services:
 
 ## 📊 Comparison with Official ChurchCRM Docker Image
 
-| Feature | [churchcrm/crm](https://hub.docker.com/r/churchcrm/crm) | thasko/churchcrm |
+| Feature | [churchcrm/crm](https://hub.docker.com/r/churchcrm/crm) | kolumbus120/churchcrm |
 |---------|--------------------------------------------------------|------------------|
 | PHP Version | 5.6 | **8.4** |
 | Auto-updates | ❌ No | **✅ Yes** |
@@ -232,7 +232,7 @@ Then enable it in your Dockerfile or entrypoint script.
 ```yaml
 services:
   churchcrm:
-    image: thasko/churchcrm:latest
+    image: kolumbus120/churchcrm:latest
     # ... other config
   
   nginx:
@@ -286,7 +286,7 @@ docker exec churchcrm-app chown -R www-data:www-data /var/www/html
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please open an issue or pull request on [Gitea](https://gitea.serigrafika.sk/thasko/churchcrm-docker).
+Contributions are welcome! Please open an issue or pull request on [Gitea](https://gitea.serigrafika.sk/kolumbus120/churchcrm-docker).
 
 ### How to Contribute
 1. Fork the repository
@@ -314,7 +314,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 📞 Support
 
-For support, please open an issue on [Gitea](https://gitea.serigrafika.sk/thasko/churchcrm-docker/issues).
+For support, please open an issue on [Gitea](https://gitea.serigrafika.sk/kolumbus120/churchcrm-docker/issues).
 
 ---
 

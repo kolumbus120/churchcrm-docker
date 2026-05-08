@@ -24,19 +24,17 @@ jobs:
 
       # 3. Prihlásenie do Gitea Registry
       - name: Login to Gitea Registry
-        if: env.GITEA_REGISTRY != ''
         uses: docker/login-action@v2
         with:
-          registry: ${{ secrets.GITEA_REGISTRY || 'git.serigrafika.sk' }}
-          username: ${{ secrets.GITEA_USER }}
-          password: ${{ secrets.GITEA_TOKEN }}
+          registry: ${{ secrets.REGISTRY_URL || 'git.serigrafika.sk' }}
+          username: ${{ secrets.REGISTRY_USER || 'thasko' }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
 
       # 4. Prihlásenie do Docker Hub (pre komunitu)
       - name: Login to Docker Hub
-        if: env.DOCKER_HUB_USER != ''
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_HUB_USER }}
+          username: ${{ secrets.DOCKER_HUB_USER || 'kolumbus120' }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       # 5. Získanie najnovšej verzie ChurchCRM z GitHub
@@ -65,13 +63,13 @@ jobs:
           push: true
           tags: |
             # Gitea Registry tags
-            ${{ secrets.GITEA_REGISTRY || 'git.serigrafika.sk' }}/${{ secrets.GITEA_USER || 'thasko' }}/churchcrm-docker-modern:latest
-            ${{ secrets.GITEA_REGISTRY || 'git.serigrafika.sk' }}/${{ secrets.GITEA_USER || 'thasko' }}/churchcrm-docker-modern:${{ steps.churchcrm_version.outputs.version }}
-            ${{ secrets.GITEA_REGISTRY || 'git.serigrafika.sk' }}/${{ secrets.GITEA_USER || 'thasko' }}/churchcrm-docker-modern:${{ steps.date.outputs.date }}
+            ${{ secrets.REGISTRY_URL || 'git.serigrafika.sk' }}/${{ secrets.REGISTRY_USER || 'thasko' }}/churchcrm-docker:latest
+            ${{ secrets.REGISTRY_URL || 'git.serigrafika.sk' }}/${{ secrets.REGISTRY_USER || 'thasko' }}/churchcrm-docker:${{ steps.churchcrm_version.outputs.version }}
+            ${{ secrets.REGISTRY_URL || 'git.serigrafika.sk' }}/${{ secrets.REGISTRY_USER || 'thasko' }}/churchcrm-docker:${{ steps.date.outputs.date }}
             # Docker Hub tags (pre komunitu)
-            ${{ secrets.DOCKER_HUB_USER || 'thasko' }}/churchcrm:latest
-            ${{ secrets.DOCKER_HUB_USER || 'thasko' }}/churchcrm:${{ steps.churchcrm_version.outputs.version }}
-            ${{ secrets.DOCKER_HUB_USER || 'thasko' }}/churchcrm:${{ steps.date.outputs.date }}
+            ${{ secrets.DOCKER_HUB_USER || 'kolumbus120' }}/churchcrm:latest
+            ${{ secrets.DOCKER_HUB_USER || 'kolumbus120' }}/churchcrm:${{ steps.churchcrm_version.outputs.version }}
+            ${{ secrets.DOCKER_HUB_USER || 'kolumbus120' }}/churchcrm:${{ steps.date.outputs.date }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
