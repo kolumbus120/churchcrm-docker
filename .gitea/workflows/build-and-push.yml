@@ -21,19 +21,35 @@ jobs:
         id: version
         run: |
           LATEST=$(curl -s https://api.github.com/repos/ChurchCRM/CRM/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+          MAJOR=$(echo "$LATEST" | cut -d. -f1)
           echo "version=$LATEST" >> $GITHUB_OUTPUT
+          echo "major=$MAJOR" >> $GITHUB_OUTPUT
+          echo "prev_major=$((MAJOR - 1))" >> $GITHUB_OUTPUT
           echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-      - name: Check if build is needed
+      - name: Check build conditions
         id: check
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          HTTP=$(curl -s -o /dev/null -w "%{http_code}" "https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_HUB_USER }}/churchcrm/tags/$VERSION/")
-          if [ "$HTTP" = "200" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+          MAJOR="${{ steps.version.outputs.major }}"
+          PREV="${{ steps.version.outputs.prev_major }}"
+          HUB="https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_HUB_USER }}/churchcrm/tags"
+
+          V_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$HUB/$VERSION/")
+          M_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$HUB/$MAJOR/")
+          P_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$HUB/$PREV/")
+
+          if [ "$V_HTTP" = "200" ] && [ "${{ github.event_name }}" = "schedule" ]; then
             echo "skip=true" >> $GITHUB_OUTPUT
-            echo "Verzia $VERSION už je na Docker Hub — preskakujem scheduled build"
+            echo "major_jump=false" >> $GITHUB_OUTPUT
+            echo "Verzia $VERSION už je na Docker Hub — preskakujem"
+          elif [ "$M_HTTP" != "200" ] && [ "$P_HTTP" = "200" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "major_jump=true" >> $GITHUB_OUTPUT
+            echo "Major version jump: $PREV → $MAJOR"
           else
             echo "skip=false" >> $GITHUB_OUTPUT
+            echo "major_jump=false" >> $GITHUB_OUTPUT
             echo "Buildujem verziu $VERSION"
           fi
 
@@ -56,18 +72,51 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Build and push Docker images
-        if: steps.check.outputs.skip != 'true'
+      - name: Build and push (normal update)
+        if: steps.check.outputs.skip != 'true' && steps.check.outputs.major_jump != 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
-          build-args: |
-            CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
+          build-args: CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_USER }}/churchcrm-docker:latest
+            ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_USER }}/churchcrm-docker:${{ steps.version.outputs.major }}
             ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_USER }}/churchcrm-docker:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:latest
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.major }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.date }}
+
+      - name: Build and push (major jump — :latest not updated)
+        if: steps.check.outputs.skip != 'true' && steps.check.outputs.major_jump == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          build-args: CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_USER }}/churchcrm-docker:${{ steps.version.outputs.major }}
+            ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_USER }}/churchcrm-docker:${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.major }}
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.date }}
+
+      - name: Create Gitea issue for major version jump
+        if: steps.check.outputs.major_jump == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          MAJOR="${{ steps.version.outputs.major }}"
+          PREV="${{ steps.version.outputs.prev_major }}"
+          DATE="${{ steps.version.outputs.date }}"
+          BODY=$(jq -n \
+            --arg title "⚠️ Major version available: ChurchCRM ${VERSION}" \
+            --arg body "## ChurchCRM ${VERSION} is available\n\n**:latest tag was NOT updated** — it stays on the last ${PREV}.x version.\n\nNew tags published:\n- \`kolumbus120/churchcrm:${VERSION}\`\n- \`kolumbus120/churchcrm:${MAJOR}\` (tracks all ${MAJOR}.x updates)\n- \`kolumbus120/churchcrm:${DATE}\`\n\n## Before upgrading\n\n- [ ] Read the [ChurchCRM ${VERSION} release notes](https://github.com/ChurchCRM/CRM/releases/tag/${VERSION})\n- [ ] Backup your database\n- [ ] Test on staging first\n\n## How to upgrade\n\nChange your image tag:\n\`\`\`yaml\nimage: kolumbus120/churchcrm:${VERSION}\n\`\`\`\nor use the major tag to keep getting ${MAJOR}.x updates:\n\`\`\`yaml\nimage: kolumbus120/churchcrm:${MAJOR}\n\`\`\`" \
+            '{title: $title, body: $body}')
+          curl -s -X POST \
+            "https://git.serigrafika.sk/api/v1/repos/${{ secrets.REGISTRY_USER }}/churchcrm-docker/issues" \
+            -H "Authorization: token ${{ secrets.REGISTRY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY"

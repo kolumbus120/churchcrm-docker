@@ -21,19 +21,35 @@ jobs:
         id: version
         run: |
           LATEST=$(curl -s https://api.github.com/repos/ChurchCRM/CRM/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+          MAJOR=$(echo "$LATEST" | cut -d. -f1)
           echo "version=$LATEST" >> $GITHUB_OUTPUT
+          echo "major=$MAJOR" >> $GITHUB_OUTPUT
+          echo "prev_major=$((MAJOR - 1))" >> $GITHUB_OUTPUT
           echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-      - name: Check if build is needed
+      - name: Check build conditions
         id: check
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          HTTP=$(curl -s -o /dev/null -w "%{http_code}" "https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_HUB_USER }}/churchcrm/tags/$VERSION/")
-          if [ "$HTTP" = "200" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+          MAJOR="${{ steps.version.outputs.major }}"
+          PREV="${{ steps.version.outputs.prev_major }}"
+          HUB="https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_HUB_USER }}/churchcrm/tags"
+
+          V_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$HUB/$VERSION/")
+          M_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$HUB/$MAJOR/")
+          P_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$HUB/$PREV/")
+
+          if [ "$V_HTTP" = "200" ] && [ "${{ github.event_name }}" = "schedule" ]; then
             echo "skip=true" >> $GITHUB_OUTPUT
-            echo "Version $VERSION already on Docker Hub — skipping scheduled build"
+            echo "major_jump=false" >> $GITHUB_OUTPUT
+            echo "Version $VERSION already on Docker Hub — skipping"
+          elif [ "$M_HTTP" != "200" ] && [ "$P_HTTP" = "200" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "major_jump=true" >> $GITHUB_OUTPUT
+            echo "Major version jump detected: $PREV → $MAJOR"
           else
             echo "skip=false" >> $GITHUB_OUTPUT
+            echo "major_jump=false" >> $GITHUB_OUTPUT
             echo "Building version $VERSION"
           fi
 
@@ -48,16 +64,29 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Build and push Docker images
-        if: steps.check.outputs.skip != 'true'
+      - name: Build and push (normal update)
+        if: steps.check.outputs.skip != 'true' && steps.check.outputs.major_jump != 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
-          build-args: |
-            CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
+          build-args: CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:latest
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.major }}
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.date }}
+
+      - name: Build and push (major jump — :latest not updated)
+        if: steps.check.outputs.skip != 'true' && steps.check.outputs.major_jump == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          build-args: CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.major }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.date }}
