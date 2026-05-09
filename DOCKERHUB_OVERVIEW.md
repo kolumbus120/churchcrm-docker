@@ -4,17 +4,17 @@
 
 ---
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/thasko/churchcrm.svg)](https://hub.docker.com/r/thasko/churchcrm)
-[![Docker Stars](https://img.shields.io/docker/stars/thasko/churchcrm.svg)](https://hub.docker.com/r/thasko/churchcrm)
-[![Image Size](https://img.shields.io/docker/image-size/thasko/churchcrm/latest.svg)](https://hub.docker.com/r/thasko/churchcrm)
-[![Latest Version](https://img.shields.io/docker/v/thasko/churchcrm/latest.svg)](https://hub.docker.com/r/thasko/churchcrm)
+[![Docker Pulls](https://img.shields.io/docker/pulls/kolumbus120/churchcrm.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
+[![Docker Stars](https://img.shields.io/docker/stars/kolumbus120/churchcrm.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
+[![Image Size](https://img.shields.io/docker/image-size/kolumbus120/churchcrm/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
+[![Latest Version](https://img.shields.io/docker/v/kolumbus120/churchcrm/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
 [![Build Status](https://github.com/kolumbus120/churchcrm-docker/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/kolumbus120/churchcrm-docker/actions)
 [![PHP Version](https://img.shields.io/badge/php-8.4-blue.svg)](https://www.php.net)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## Modern Docker image for ChurchCRM 7.3.1
+## Modern Docker image for ChurchCRM
 
 **The free, open-source church management system with automatic updates.**
 
@@ -25,7 +25,7 @@ This image provides a complete, production-ready ChurchCRM installation with all
 ## Features
 
 - **PHP 8.4** with Apache web server
-- **All required PHP extensions** for ChurchCRM 7.3.1:
+- **All required PHP extensions** for ChurchCRM:
   - pdo, pdo_mysql, mysqli, curl, fileinfo, filter, gd, gettext, iconv, mbstring, bcmath, zip, zlib, session, intl
 - **Automatic updates** via CI/CD pipeline:
   - New ChurchCRM versions (daily check at 2:00 UTC)
@@ -127,7 +127,7 @@ This image is **automatically rebuilt and pushed** in the following cases:
 
 ## Comparison with Official ChurchCRM Docker Image
 
-| Feature | churchcrm/crm | thasko/churchcrm |
+| Feature | churchcrm/crm | kolumbus120/churchcrm |
 |---------|---------------|------------------|
 | PHP Version | 5.6 (EOL) | **8.4** (Latest) |
 | Auto-updates | No | **Yes** (Daily) |
@@ -211,4 +211,3 @@ For support, please open an issue on [GitHub](https://github.com/kolumbus120/chu
 ---
 
 **Maintained by:** [kolumbus120](https://github.com/kolumbus120)
-*Based on ChurchCRM 7.3.1*
