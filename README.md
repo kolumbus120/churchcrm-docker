@@ -58,8 +58,8 @@ Access ChurchCRM at: **http://localhost:8080**
 | Tag | Description |
 |-----|-------------|
 | `latest` | Latest stable version (auto-updates) |
+| `7` | Latest 7.x version |
 | `7.3.1` | Specific ChurchCRM version |
-| `2024-05-15` | Build date (YYYY-MM-DD format) |
 
 For all available tags, see: [Docker Hub Tags](https://hub.docker.com/r/kolumbus120/churchcrm/tags)
 
@@ -124,15 +124,11 @@ services:
 ```
 churchcrm-docker/
 ├── Dockerfile              # Docker image definition
-├── docker-compose.yml     # Full setup with MariaDB
+├── docker-compose.yml      # Full setup with MariaDB
 ├── .env.example            # Environment variables template
 ├── README.md               # Project documentation
-├── CI-CD.md               # CI/CD pipeline documentation
-├── CO_UROBIT.md           # Setup instructions
-├── .github/workflows/
-│   └── build-and-push.yml  # GitHub Actions workflow
-└── scripts/
-    └── check-updates.sh    # Manual update checker
+└── .github/workflows/
+    └── build-and-push.yml  # GitHub Actions workflow
 ```
 
 ---
@@ -318,4 +314,4 @@ For support, please open an issue on [GitHub](https://github.com/kolumbus120/chu
 
 **Maintained by:** [kolumbus120](https://github.com/kolumbus120)
 
-*Last updated: 2024-05-15*
+*Last updated: 2026-05-09*
