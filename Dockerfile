@@ -32,6 +32,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     mysqli \
     pdo_mysql \
     soap \
+    sockets \
     xml \
     zip
 
