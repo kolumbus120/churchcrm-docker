@@ -1,15 +1,19 @@
 services:
   churchcrm:
-    image: git.serigrafika.sk/thasko/churchcrm-docker-modern:7.3.1
+    image: kolumbus120/churchcrm:latest
     container_name: churchcrm-app
     restart: unless-stopped
     ports:
-      - '30086:80'
+      - '8080:80'
     environment:
       - MYSQL_DB_HOST=churchcrm-db
       - MYSQL_DB_NAME=churchcrm
       - MYSQL_DB_USER=${MYSQL_USER}
       - MYSQL_DB_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - churchcrm_config:/var/www/html/config
+      - churchcrm_images:/var/www/html/images
+      - churchcrm_backup:/var/www/html/backup
     depends_on:
       churchcrm-db:
         condition: service_healthy
@@ -33,4 +37,10 @@ services:
         - '--innodb_initialized'
       timeout: 5s
     volumes:
-      - /mnt/apps/churchcrm_db:/var/lib/mysql
+      - churchcrm_db:/var/lib/mysql
+
+volumes:
+  churchcrm_config:
+  churchcrm_images:
+  churchcrm_backup:
+  churchcrm_db:
