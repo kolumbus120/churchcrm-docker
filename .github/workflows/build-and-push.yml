@@ -18,6 +18,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -47,11 +50,11 @@ jobs:
           if [ "$V_HTTP" = "200" ] && [ "${{ github.event_name }}" = "schedule" ]; then
             echo "skip=true" >> $GITHUB_OUTPUT
             echo "major_jump=false" >> $GITHUB_OUTPUT
-            echo "Version $VERSION already on Docker Hub — skipping"
+            echo "Version $VERSION already on Docker Hub - skipping"
           elif [ "$M_HTTP" != "200" ] && [ "$P_HTTP" = "200" ]; then
             echo "skip=false" >> $GITHUB_OUTPUT
             echo "major_jump=true" >> $GITHUB_OUTPUT
-            echo "Major version jump detected: $PREV → $MAJOR"
+            echo "Major version jump detected: $PREV to $MAJOR"
           else
             echo "skip=false" >> $GITHUB_OUTPUT
             echo "major_jump=false" >> $GITHUB_OUTPUT
@@ -70,7 +73,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Build and push (normal update or force_latest)
-        if: >
+        if: |
           steps.check.outputs.skip != 'true' &&
           (steps.check.outputs.major_jump != 'true' || inputs.force_latest == true)
         uses: docker/build-push-action@v5
@@ -85,8 +88,8 @@ jobs:
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.date }}
 
-      - name: Build and push (major jump — :latest protected)
-        if: >
+      - name: Build and push (major jump - :latest protected)
+        if: |
           steps.check.outputs.skip != 'true' &&
           steps.check.outputs.major_jump == 'true' &&
           inputs.force_latest != true
@@ -102,40 +105,49 @@ jobs:
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.date }}
 
       - name: Create GitHub issue for major version jump
-        if: steps.check.outputs.major_jump == 'true' && inputs.force_latest != true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          MAJOR="${{ steps.version.outputs.major }}"
-          PREV="${{ steps.version.outputs.prev_major }}"
-          DATE="${{ steps.version.outputs.date }}"
-          gh issue create \
-            --title "⚠️ Major version available: ChurchCRM ${VERSION}" \
-            --body "## ChurchCRM ${VERSION} is available
-
-**:latest tag was NOT updated** — it stays on the last ${PREV}.x version.
-
-New tags published:
-- \`kolumbus120/churchcrm:${VERSION}\`
-- \`kolumbus120/churchcrm:${MAJOR}\` (tracks all ${MAJOR}.x updates)
-- \`kolumbus120/churchcrm:${DATE}\`
-
-## Before upgrading
-
-- [ ] Read the [ChurchCRM ${VERSION} release notes](https://github.com/ChurchCRM/CRM/releases/tag/${VERSION})
-- [ ] Backup your database
-- [ ] Test on staging first
-
-## How to upgrade
-
-Change your image tag:
-\`\`\`yaml
-image: kolumbus120/churchcrm:${VERSION}
-\`\`\`
-Or use the major tag to keep getting ${MAJOR}.x updates automatically:
-\`\`\`yaml
-image: kolumbus120/churchcrm:${MAJOR}
-\`\`\`
-
-To promote this version to \`:latest\`, run the workflow manually with **Force update :latest** checked."
+        if: |
+          steps.check.outputs.major_jump == 'true' &&
+          inputs.force_latest != true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ steps.version.outputs.version }}';
+            const major = '${{ steps.version.outputs.major }}';
+            const prev = '${{ steps.version.outputs.prev_major }}';
+            const date = '${{ steps.version.outputs.date }}';
+            const user = '${{ secrets.DOCKER_HUB_USER }}';
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Major version available: ChurchCRM ${version}`,
+              body: [
+                `## ChurchCRM ${version} is available`,
+                ``,
+                `**:latest tag was NOT updated** - it stays on the last ${prev}.x version.`,
+                ``,
+                `New tags published:`,
+                `- \`${user}/churchcrm:${version}\``,
+                `- \`${user}/churchcrm:${major}\` (tracks all ${major}.x updates)`,
+                `- \`${user}/churchcrm:${date}\``,
+                ``,
+                `## Before upgrading`,
+                ``,
+                `- [ ] Read the [ChurchCRM ${version} release notes](https://github.com/ChurchCRM/CRM/releases/tag/${version})`,
+                `- [ ] Backup your database`,
+                `- [ ] Test on staging first`,
+                ``,
+                `## How to upgrade`,
+                ``,
+                `\`\`\`yaml`,
+                `image: ${user}/churchcrm:${version}`,
+                `\`\`\``,
+                ``,
+                `Or pin to the major tag for automatic ${major}.x updates:`,
+                ``,
+                `\`\`\`yaml`,
+                `image: ${user}/churchcrm:${major}`,
+                `\`\`\``,
+                ``,
+                `To promote to \`:latest\`, run the workflow manually with **Force update :latest** checked.`,
+              ].join('\n')
+            });
