@@ -8,7 +8,12 @@ on:
     paths:
       - 'Dockerfile'
       - '.github/workflows/build-and-push.yml'
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      force_latest:
+        description: 'Force update :latest (use to promote a major version)'
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -64,8 +69,10 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Build and push (normal update)
-        if: steps.check.outputs.skip != 'true' && steps.check.outputs.major_jump != 'true'
+      - name: Build and push (normal update or force_latest)
+        if: >
+          steps.check.outputs.skip != 'true' &&
+          (steps.check.outputs.major_jump != 'true' || inputs.force_latest == true)
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -78,8 +85,11 @@ jobs:
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.date }}
 
-      - name: Build and push (major jump — :latest not updated)
-        if: steps.check.outputs.skip != 'true' && steps.check.outputs.major_jump == 'true'
+      - name: Build and push (major jump — :latest protected)
+        if: >
+          steps.check.outputs.skip != 'true' &&
+          steps.check.outputs.major_jump == 'true' &&
+          inputs.force_latest != true
         uses: docker/build-push-action@v5
         with:
           context: .

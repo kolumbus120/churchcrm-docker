@@ -8,7 +8,12 @@ on:
     paths:
       - 'Dockerfile'
       - '.gitea/workflows/build-and-push.yml'
-  workflow_dispatch:  # Manuálny trigger cez Gitea UI
+  workflow_dispatch:
+    inputs:
+      force_latest:
+        description: 'Force update :latest (použiť pri povýšení major verzie)'
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -72,8 +77,10 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Build and push (normal update)
-        if: steps.check.outputs.skip != 'true' && steps.check.outputs.major_jump != 'true'
+      - name: Build and push (normal update or force_latest)
+        if: >
+          steps.check.outputs.skip != 'true' &&
+          (steps.check.outputs.major_jump != 'true' || inputs.force_latest == true)
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -89,8 +96,11 @@ jobs:
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.date }}
 
-      - name: Build and push (major jump — :latest not updated)
-        if: steps.check.outputs.skip != 'true' && steps.check.outputs.major_jump == 'true'
+      - name: Build and push (major jump — :latest protected)
+        if: >
+          steps.check.outputs.skip != 'true' &&
+          steps.check.outputs.major_jump == 'true' &&
+          inputs.force_latest != true
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -105,7 +115,7 @@ jobs:
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.date }}
 
       - name: Create Gitea issue for major version jump
-        if: steps.check.outputs.major_jump == 'true'
+        if: steps.check.outputs.major_jump == 'true' && inputs.force_latest != true
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           MAJOR="${{ steps.version.outputs.major }}"
