@@ -8,7 +8,6 @@
 [![Docker Stars](https://img.shields.io/docker/stars/kolumbus120/churchcrm.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
 [![Image Size](https://img.shields.io/docker/image-size/kolumbus120/churchcrm/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
 [![Latest Version](https://img.shields.io/docker/v/kolumbus120/churchcrm/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/kolumbus120/churchcrm-docker/build-and-push.yml?label=build)](https://github.com/kolumbus120/churchcrm-docker/actions)
 [![PHP Version](https://img.shields.io/badge/php-8.4-blue.svg)](https://www.php.net)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
