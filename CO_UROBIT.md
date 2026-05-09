@@ -37,7 +37,7 @@ git add .
 git commit -m "Add CI/CD pipeline for automatic Docker builds
 
 - Add ARG CHURCHCRM_VERSION to Dockerfile for dynamic version
-- Add Gitea Actions workflow (.gitea/workflows/build-and-push.yml)
+- Add GitHub Actions workflow (.github/workflows/build-and-push.yml)
 - Add GitHub Actions workflow (.github/workflows/build-and-push.yml)
 - Add update check script (scripts/check-updates.sh)
 - Add CI/CD documentation (CI-CD.md)
@@ -51,7 +51,7 @@ git push origin main
 ```
 
 **✅ Overenie:**
-- Prejdi na `git.serigrafika.sk/thasko/churchcrm-docker-modern`
+- Prejdi na `github.com/kolumbus120/churchcrm-docker`
 - Skontroluj, či sú tam nové súbory
 
 ---
@@ -61,7 +61,7 @@ git push origin main
 **Ciel:** Nastaviť prístupové tokeny, aby pipeline mohol pushovať images.
 
 ### 2.1 Vytvor Gitea Access Token
-1. Prejdi na: `git.serigrafika.sk/user/settings/applications`
+1. Prejdi na: `github.com/settings/tokens`
 2. Klikni na **"Generate New Token"**
 3. **Token Name:** `churchcrm-ci-cd`
 4. **Permissions:**
@@ -79,13 +79,13 @@ git push origin main
 6. **Kopíruj token**
 
 ### 2.3 Pridaj Secrets do Gitea Repository
-1. Prejdi do svojho repozitáru: `git.serigrafika.sk/thasko/churchcrm-docker-modern`
+1. Prejdi do svojho repozitáru: `github.com/kolumbus120/churchcrm-docker`
 2. Choď do: **Settings → Actions → Secrets → New Repository Secret**
 3. Vytvor nasledujúce secrets:
 
 | Secret Name | Value | Popis |
 |-------------|-------|-------|
-| `GITEA_REGISTRY` | `git.serigrafika.sk` | URL tvojej Gitea registry |
+| `Secrets are now configured in GitHub → Settings → Secrets and variables → Actions
 | `GITEA_USER` | `thasko` | Tvoje Gitea username |
 | `GITEA_TOKEN` | `[token z kroku 2.1]` | Gitea access token |
 | `DOCKER_HUB_USER` | `thasko` | Tvoje Docker Hub username |
@@ -131,7 +131,7 @@ git push origin main
 **✅ Overenie:**
 ```bash
 # Skontroluj, či image existuje
-docker pull git.serigrafika.sk/thasko/churchcrm-docker-modern:latest
+docker pull github.com/kolumbus120/churchcrm-docker:latest
 
 # Skontroluj, či je na Docker Hub
 docker pull thasko/churchcrm:latest
@@ -146,7 +146,7 @@ docker images | grep churchcrm
 
 **Ciel:** Skontrolovať, že pipeline bude fungovať automaticky.
 
-1. **Skontroluj Gitea Actions logs:**
+1. **Skontroluj GitHub Actions logs:**
    - Prejdi do Gitea → Actions
    - Over, že workflow prebehol úspešne
 
@@ -183,7 +183,7 @@ docker images | grep churchcrm
 [![Docker Hub Stars](https://img.shields.io/docker/stars/thasko/churchcrm.svg)](https://hub.docker.com/r/thasko/churchcrm)
 [![Image Size](https://img.shields.io/docker/image-size/thasko/churchcrm/latest.svg)](https://hub.docker.com/r/thasko/churchcrm)
 [![Latest Version](https://img.shields.io/docker/v/thasko/churchcrm/latest.svg)](https://hub.docker.com/r/thasko/churchcrm)
-[![Build Status](https://gitea.serigrafika.sk/thasko/churchcrm-docker/workflows/build-and-push/badge.svg)](https://gitea.serigrafika.sk/thasko/churchcrm-docker/actions)
+[![Build Status](https://github.com/kolumbus120/churchcrm-docker/workflows/build-and-push/badge.svg)](https://github.com/kolumbus120/churchcrm-docker/actions)
 
 **Modern Docker image for [ChurchCRM](https://churchcrm.io) with automatic updates.**
 
@@ -213,7 +213,7 @@ See [docker-compose.yml](docker-compose.yml) for a complete setup with MariaDB.
 
 ```bash
 # Clone this repository
-git clone https://gitea.serigrafika.sk/thasko/churchcrm-docker.git
+git clone https://github.com/kolumbus120/churchcrm-docker.git
 cd churchcrm-docker
 
 # Create .env file (copy from .env.example)
@@ -293,8 +293,8 @@ churchcrm-docker/
 ├── README.md               # This file
 ├── CI-CD.md               # CI/CD pipeline documentation
 ├── CO_UROBIT.md           # Setup instructions (this file)
-├── .gitea/workflows/
-│   └── build-and-push.yml  # Gitea Actions workflow
+├── .github/workflows/
+│   └── build-and-push.yml  # GitHub Actions workflow
 ├── .github/workflows/
 │   └── build-and-push.yml  # GitHub Actions workflow (fallback)
 └── scripts/
@@ -324,7 +324,7 @@ churchcrm-docker/
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please open an issue or pull request on [Gitea](https://gitea.serigrafika.sk/thasko/churchcrm-docker).
+Contributions are welcome! Please open an issue or pull request on [Gitea](https://github.com/kolumbus120/churchcrm-docker).
 
 ## 📄 License
 
@@ -334,7 +334,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 - [ChurchCRM](https://churchcrm.io) - The original project
 - [Docker](https://docker.com) - Container platform
-- [Gitea](https://gitea.io) - Git service
+- [GitHub](https://github.com) - Git service
 ```
 
 ### 6.2 Zmeniť názov repozitáru (optional)
@@ -367,7 +367,7 @@ Ak chceš, môžeš premenovať repozitár z `churchcrm-docker-modern` na `churc
    - Multi-architecture support (amd64, arm64)
    - Daily automated builds
 
-   **Repository:** https://gitea.serigrafika.sk/thasko/churchcrm-docker
+   **Repository:** https://github.com/kolumbus120/churchcrm-docker
    **Docker Hub:** https://hub.docker.com/r/thasko/churchcrm
 
    **Comparison:**
@@ -405,7 +405,7 @@ Ak chceš, môžeš premenovať repozitár z `churchcrm-docker-modern` na `churc
 Po splnení krokov 1-5 máš:
 - ✅ Funkčný CI/CD pipeline
 - ✅ Automatické Docker builds
-- ✅ Images na Gitea Registry a Docker Hub
+- ✅ Images na GitHub Container Registry a Docker Hub
 - ✅ Užívatelia môžu používat tvoj image
 
 **Ďalšie vylepšenia (optional):**
@@ -419,7 +419,7 @@ Po splnení krokov 1-5 máš:
 ## 📞 Riešenie problémov
 
 ### Pipeline zlyhá
-1. Skontroluj logs v Gitea Actions
+1. Skontroluj logs v GitHub Actions
 2. Over, či sú secrets správne nastavené
 3. Spusti pipeline manuálne a sleduj chybu
 
@@ -428,7 +428,7 @@ Po splnení krokov 1-5 máš:
 2. Skontroluj, či má token práva Read/Write
 3. Over, či je repository name správne
 
-### Image sa nepushuje na Gitea Registry
+### Image sa nepushuje na GitHub Container Registry
 1. Over, či je Gitea token platný
 2. Skontroluj, či má token práva `write:package`
 
@@ -442,6 +442,6 @@ Po splnení krokov 1-5 máš:
 ## 📚 Dodatočné zdroje
 
 - [Docker Hub Documentation](https://docs.docker.com/docker-hub/)
-- [Gitea Actions Documentation](https://docs.gitea.io/en-us/actions/)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [ChurchCRM GitHub](https://github.com/ChurchCRM/CRM)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)

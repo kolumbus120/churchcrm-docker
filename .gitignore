@@ -5,3 +5,8 @@ CREDENTIALS.md
 .env
 *.sql
 *.log
+
+# Local/personal files
+TMUX_CHEATSHEET.md
+churchcrm.yml
+truenas_custom.yml

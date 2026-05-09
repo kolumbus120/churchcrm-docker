@@ -4,7 +4,7 @@
 [![Docker Hub Stars](https://img.shields.io/docker/stars/kolumbus120/churchcrm.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
 [![Image Size](https://img.shields.io/docker/image-size/kolumbus120/churchcrm/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
 [![Latest Version](https://img.shields.io/docker/v/kolumbus120/churchcrm/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
-[![Build Status](https://gitea.serigrafika.sk/kolumbus120/churchcrm-docker/workflows/build-and-push/badge.svg)](https://gitea.serigrafika.sk/kolumbus120/churchcrm-docker/actions)
+[![Build Status](https://github.com/kolumbus120/churchcrm-docker/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/kolumbus120/churchcrm-docker/actions)
 
 **Modern Docker image for [ChurchCRM](https://churchcrm.io) with automatic updates.**
 
@@ -36,7 +36,7 @@ See [docker-compose.yml](docker-compose.yml) for a complete setup with MariaDB.
 
 ```bash
 # Clone this repository
-git clone https://gitea.serigrafika.sk/kolumbus120/churchcrm-docker.git
+git clone https://github.com/kolumbus120/churchcrm-docker.git
 cd churchcrm-docker
 
 # Create .env file (copy from .env.example)
@@ -129,10 +129,8 @@ churchcrm-docker/
 ├── README.md               # Project documentation
 ├── CI-CD.md               # CI/CD pipeline documentation
 ├── CO_UROBIT.md           # Setup instructions
-├── .gitea/workflows/
-│   └── build-and-push.yml  # Gitea Actions workflow
 ├── .github/workflows/
-│   └── build-and-push.yml  # GitHub Actions workflow (fallback)
+│   └── build-and-push.yml  # GitHub Actions workflow
 └── scripts/
     └── check-updates.sh    # Manual update checker
 ```
@@ -286,7 +284,7 @@ docker exec churchcrm-app chown -R www-data:www-data /var/www/html
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please open an issue or pull request on [Gitea](https://gitea.serigrafika.sk/kolumbus120/churchcrm-docker).
+Contributions are welcome! Please open an issue or pull request on [GitHub](https://github.com/kolumbus120/churchcrm-docker).
 
 ### How to Contribute
 1. Fork the repository
@@ -306,7 +304,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 - [ChurchCRM](https://churchcrm.io) - The original project
 - [Docker](https://docker.com) - Container platform
-- [Gitea](https://gitea.io) - Git service
+- [GitHub](https://github.com) - Git service
 - [MariaDB](https://mariadb.org) - Database server
 - [PHP](https://php.net) - Programming language
 
@@ -314,10 +312,10 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 📞 Support
 
-For support, please open an issue on [Gitea](https://gitea.serigrafika.sk/kolumbus120/churchcrm-docker/issues).
+For support, please open an issue on [GitHub](https://github.com/kolumbus120/churchcrm-docker/issues).
 
 ---
 
-**Maintained by:** [thasko](https://gitea.serigrafika.sk/thasko)
+**Maintained by:** [kolumbus120](https://github.com/kolumbus120)
 
 *Last updated: 2024-05-15*

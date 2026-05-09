@@ -100,3 +100,42 @@ jobs:
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.major }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.date }}
+
+      - name: Create GitHub issue for major version jump
+        if: steps.check.outputs.major_jump == 'true' && inputs.force_latest != true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          MAJOR="${{ steps.version.outputs.major }}"
+          PREV="${{ steps.version.outputs.prev_major }}"
+          DATE="${{ steps.version.outputs.date }}"
+          gh issue create \
+            --title "⚠️ Major version available: ChurchCRM ${VERSION}" \
+            --body "## ChurchCRM ${VERSION} is available
+
+**:latest tag was NOT updated** — it stays on the last ${PREV}.x version.
+
+New tags published:
+- \`kolumbus120/churchcrm:${VERSION}\`
+- \`kolumbus120/churchcrm:${MAJOR}\` (tracks all ${MAJOR}.x updates)
+- \`kolumbus120/churchcrm:${DATE}\`
+
+## Before upgrading
+
+- [ ] Read the [ChurchCRM ${VERSION} release notes](https://github.com/ChurchCRM/CRM/releases/tag/${VERSION})
+- [ ] Backup your database
+- [ ] Test on staging first
+
+## How to upgrade
+
+Change your image tag:
+\`\`\`yaml
+image: kolumbus120/churchcrm:${VERSION}
+\`\`\`
+Or use the major tag to keep getting ${MAJOR}.x updates automatically:
+\`\`\`yaml
+image: kolumbus120/churchcrm:${MAJOR}
+\`\`\`
+
+To promote this version to \`:latest\`, run the workflow manually with **Force update :latest** checked."

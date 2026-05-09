@@ -9,7 +9,7 @@ Tento dokument popisuje, ako funguje automatický CI/CD pipeline pre ChurchCRM D
 1. **Automatické aktualizácie ChurchCRM** - Ak vyjde nová verzia na GitHub, pipeline ju automaticky zohladní
 2. **Automatické bezpečnostné opravy** - Base images (PHP, Apache) sa táhnu z Docker Hub, kde sa automaticky aktualizujú
 3. **Multi-platform support** - Images sa buildia pre `linux/amd64` a `linux/arm64`
-4. **Dostupnosť pre komunitu** - Images sa pushujú na Gitea Registry a Docker Hub
+4. **Dostupnosť pre komunitu** - Images sa pushujú na GitHub Container Registry a Docker Hub
 
 ---
 
@@ -26,7 +26,7 @@ Tento dokument popisuje, ako funguje automatický CI/CD pipeline pre ChurchCRM D
 │      ↓                                                      │
 │  3. Rebuildne Docker image s najnovšou verziou             │
 │      ↓                                                      │
-│  4. Pushne na Gitea Registry a Docker Hub                   │
+│  4. Pushne na GitHub Container Registry a Docker Hub                   │
 │      ↓                                                      │
 │  5. Užívateľ má k dispozícii nové tags:                     │
 │     - :latest (vždy najnovšia verzia)                       │
@@ -42,8 +42,8 @@ Tento dokument popisuje, ako funguje automatický CI/CD pipeline pre ChurchCRM D
 
 ```
 churchcrm-docker-modern/
-├── .gitea/workflows/
-│   └── build-and-push.yml      # Gitea Actions workflow
+├── .github/workflows/
+│   └── build-and-push.yml      # GitHub Actions workflow
 ├── .github/workflows/
 │   └── build-and-push.yml      # GitHub Actions workflow (fallback)
 ├── scripts/
@@ -55,7 +55,7 @@ churchcrm-docker-modern/
 
 ## ⚙️ **Nastavenie Secrets**
 
-### Pre **Gitea Actions**
+### Pre **GitHub Actions**
 
 1. Prejdi do svojho Gitea repozitáru
 2. Choď do **Settings → Actions → Secrets**
@@ -63,7 +63,7 @@ churchcrm-docker-modern/
 
 | Secret | Popis | Príklad |
 |--------|-------|---------|
-| `GITEA_REGISTRY` | URL Gitea registry | `git.serigrafika.sk` |
+| `Secrets are now configured in GitHub → Settings → Secrets and variables → Actions
 | `GITEA_USER` | Tvoje Gitea username | `thasko` |
 | `GITEA_TOKEN` | Access token s právami `write:package` | `*****` |
 | `DOCKER_HUB_USER` | Tvoje Docker Hub username | `thasko` |
@@ -101,11 +101,11 @@ churchcrm-docker-modern/
 
 Po úspešnom builde sú dostupné nasledujúce tags:
 
-### **Gitea Registry**
+### **GitHub Container Registry**
 ```
-git.serigrafika.sk/thasko/churchcrm-docker-modern:latest
-git.serigrafika.sk/thasko/churchcrm-docker-modern:7.3.1    # Verzia ChurchCRM
-git.serigrafika.sk/thasko/churchcrm-docker-modern:2024-05-15 # Dátum buildu
+github.com/kolumbus120/churchcrm-docker:latest
+github.com/kolumbus120/churchcrm-docker:7.3.1    # Verzia ChurchCRM
+github.com/kolumbus120/churchcrm-docker:2024-05-15 # Dátum buildu
 ```
 
 ### **Docker Hub** (pre komunitu)
@@ -215,18 +215,18 @@ chmod +x scripts/check-updates.sh
 
 ## 🔗 **Použité technológie**
 
-- **Gitea Actions** - CI/CD platforma
+- **GitHub Actions** - CI/CD platforma
 - **Docker Buildx** - Multi-platform builds
 - **GitHub API** - Pre získanie najnovšej verzie ChurchCRM
 - **Docker Hub** - Registry pre komunitu
-- **Gitea Registry** - Privátna registry
+- **GitHub Container Registry** - Privátna registry
 
 ---
 
 ## 📞 **Podpora**
 
 Ak máš problémy:
-1. Skontroluj logs v Gitea/GitHub Actions
+1. Skontroluj logs v GitHub Actions
 2. Skontroluj, či sú secrets správne nastavené
 3. Spusti pipeline manuálne a sleduj chyby
 4. Použi `docker build --no-cache .` pre testovanie lokálne

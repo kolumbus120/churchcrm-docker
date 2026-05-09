@@ -8,7 +8,7 @@
 [![Docker Stars](https://img.shields.io/docker/stars/thasko/churchcrm.svg)](https://hub.docker.com/r/thasko/churchcrm)
 [![Image Size](https://img.shields.io/docker/image-size/thasko/churchcrm/latest.svg)](https://hub.docker.com/r/thasko/churchcrm)
 [![Latest Version](https://img.shields.io/docker/v/thasko/churchcrm/latest.svg)](https://hub.docker.com/r/thasko/churchcrm)
-[![Build Status](https://gitea.serigrafika.sk/thasko/churchcrm-docker/workflows/build-and-push/badge.svg)](https://gitea.serigrafika.sk/thasko/churchcrm-docker/actions)
+[![Build Status](https://github.com/kolumbus120/churchcrm-docker/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/kolumbus120/churchcrm-docker/actions)
 [![PHP Version](https://img.shields.io/badge/php-8.4-blue.svg)](https://www.php.net)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
@@ -206,9 +206,9 @@ This project is open source and available under the [MIT License](https://openso
 
 ## Support
 
-For support, please open an issue on [Gitea](https://gitea.serigrafika.sk/thasko/churchcrm-docker/issues).
+For support, please open an issue on [GitHub](https://github.com/kolumbus120/churchcrm-docker/issues).
 
 ---
 
-**Maintained by:** [thasko](https://gitea.serigrafika.sk/thasko)
+**Maintained by:** [kolumbus120](https://github.com/kolumbus120)
 *Based on ChurchCRM 7.3.1*
