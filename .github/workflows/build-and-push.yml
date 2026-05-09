@@ -33,7 +33,6 @@ jobs:
           echo "version=$LATEST" >> $GITHUB_OUTPUT
           echo "major=$MAJOR" >> $GITHUB_OUTPUT
           echo "prev_major=$((MAJOR - 1))" >> $GITHUB_OUTPUT
-          echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
       - name: Check build conditions
         id: check
@@ -86,7 +85,6 @@ jobs:
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:latest
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.major }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
-            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.date }}
 
       - name: Build and push (major jump - :latest protected)
         if: |
@@ -102,7 +100,6 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.major }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
-            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.date }}
 
       - name: Create GitHub issue for major version jump
         if: |
@@ -114,7 +111,6 @@ jobs:
             const version = '${{ steps.version.outputs.version }}';
             const major = '${{ steps.version.outputs.major }}';
             const prev = '${{ steps.version.outputs.prev_major }}';
-            const date = '${{ steps.version.outputs.date }}';
             const user = '${{ secrets.DOCKER_HUB_USER }}';
             await github.rest.issues.create({
               owner: context.repo.owner,
@@ -128,7 +124,6 @@ jobs:
                 `New tags published:`,
                 `- \`${user}/churchcrm:${version}\``,
                 `- \`${user}/churchcrm:${major}\` (tracks all ${major}.x updates)`,
-                `- \`${user}/churchcrm:${date}\``,
                 ``,
                 `## Before upgrading`,
                 ``,
