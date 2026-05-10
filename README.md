@@ -11,6 +11,7 @@
 This Docker image provides a fully functional ChurchCRM installation with:
 - **PHP 8.4** + Apache with all required extensions
 - **MariaDB 11.4** support (via docker-compose)
+- **Auto-configuration** — no installer wizard needed, `Config.php` is generated automatically from environment variables
 - **Automatic updates** when new ChurchCRM versions are released
 - **Security patches** automatically applied from Docker Hub base images
 - **Multi-architecture** support (amd64, arm64)
@@ -143,6 +144,7 @@ churchcrm-docker/
 | `MYSQL_DB_NAME` | `churchcrm` | Database name |
 | `MYSQL_DB_USER` | `churchcrm` | Database user |
 | `MYSQL_DB_PASSWORD` | - | Database password (required) |
+| `MYSQL_DB_PORT` | `3306` | Database port |
 | `MYSQL_ROOT_PASSWORD` | - | MySQL root password (required) |
 
 ### Volumes (for persistent data)
@@ -172,19 +174,21 @@ services:
 
 ## 📝 First Time Setup
 
-### 1. Initial Installation
-After starting the containers:
+### 1. Auto-configuration
+The container **automatically generates** `Config.php` from environment variables on first start — no installation wizard needed.
 
-1. Open your browser and navigate to `http://localhost:8080` (or your configured port)
-2. Follow the ChurchCRM installation wizard
-3. Enter your database connection details (from docker-compose.yml)
+1. Start the containers: `docker-compose up -d`
+2. Open your browser at `http://localhost:8080`
+3. ChurchCRM is ready to use
 
-### 2. Database Configuration
-Use these values for the installation:
-- **Database Host:** `churchcrm-db` (or your container name)
-- **Database Name:** `churchcrm` (from .env file)
-- **Database User:** `churchcrm` (from .env file)
-- **Database Password:** [from your .env file]
+`Config.php` is saved to the persistent `config` volume, so it survives container restarts and image updates.
+
+### 2. How it works
+On every container start the entrypoint script:
+1. Checks if `Config.php` exists in the `config` volume
+2. If not → generates it from environment variables (`MYSQL_DB_HOST`, `MYSQL_DB_NAME`, etc.)
+3. Copies it to the location ChurchCRM expects (`Include/Config.php`)
+4. Starts Apache
 
 ---
 
@@ -314,4 +318,4 @@ For support, please open an issue on [GitHub](https://github.com/kolumbus120/chu
 
 **Maintained by:** [kolumbus120](https://github.com/kolumbus120)
 
-*Last updated: 2026-05-09*
+*Last updated: 2026-05-10*

@@ -26,6 +26,7 @@ This image provides a complete, production-ready ChurchCRM installation with all
 - **PHP 8.4** with Apache web server
 - **All required PHP extensions** for ChurchCRM:
   - pdo, pdo_mysql, mysqli, curl, fileinfo, filter, gd, gettext, iconv, mbstring, bcmath, zip, zlib, session, intl
+- **Auto-configuration** — no installer wizard needed, `Config.php` is generated automatically from environment variables on first start
 - **Automatic updates** via CI/CD pipeline:
   - New ChurchCRM versions (daily check at 2:00 UTC)
   - PHP security patches (from Docker Hub base image)
@@ -148,6 +149,7 @@ This image is **automatically rebuilt and pushed** in the following cases:
 | MYSQL_DB_NAME | churchcrm | Yes | Database name |
 | MYSQL_DB_USER | churchcrm | Yes | Database user |
 | MYSQL_DB_PASSWORD | - | Yes | Database password |
+| MYSQL_DB_PORT | 3306 | No | Database port |
 | MYSQL_ROOT_PASSWORD | - | Yes | MySQL root password |
 
 ### Volumes
@@ -187,13 +189,11 @@ volumes:
 
 ## Getting Started
 
-1. Open your browser to http://your-server:8080
-2. Follow the ChurchCRM installation wizard
-3. Enter your database connection details:
-   - Host: churchcrm-db (or your container name)
-   - Database: churchcrm
-   - User: churchcrm
-   - Password: (from your environment)
+1. Start the containers: `docker-compose up -d`
+2. Open your browser to http://your-server:8080
+3. ChurchCRM is ready — no installation wizard needed
+
+On first start, the entrypoint script automatically generates `Config.php` from your environment variables and saves it to the persistent `config` volume. On every subsequent start (including after image updates), the config is reloaded from the volume — no reconfiguration needed.
 
 ---
 
