@@ -146,6 +146,7 @@ churchcrm-docker/
 | `MYSQL_DB_PASSWORD` | - | Database password (required) |
 | `MYSQL_DB_PORT` | `3306` | Database port |
 | `MYSQL_ROOT_PASSWORD` | - | MySQL root password (required) |
+| `CHURCHCRM_URL` | `` | Full URL of your ChurchCRM instance (e.g. `https://crm.example.com`) |
 
 ### Volumes (for persistent data)
 
