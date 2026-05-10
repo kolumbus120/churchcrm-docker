@@ -180,7 +180,12 @@ The container **automatically generates** `Config.php` from environment variable
 
 1. Start the containers: `docker-compose up -d`
 2. Open your browser at `http://localhost:8080`
-3. ChurchCRM is ready to use
+3. Log in with the default credentials:
+   - **Username:** `admin`
+   - **Password:** `changeme`
+4. Change the password immediately after first login
+
+> ⚠️ The default credentials are set by ChurchCRM itself. Change them immediately after first login.
 
 `Config.php` is saved to the persistent `config` volume, so it survives container restarts and image updates.
 

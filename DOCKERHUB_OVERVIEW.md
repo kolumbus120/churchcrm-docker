@@ -192,7 +192,10 @@ volumes:
 
 1. Start the containers: `docker-compose up -d`
 2. Open your browser to http://your-server:8080
-3. ChurchCRM is ready — no installation wizard needed
+3. Log in with the default credentials:
+   - **Username:** `admin`
+   - **Password:** `changeme`
+4. Change the password immediately after first login
 
 On first start, the entrypoint script automatically generates `Config.php` from your environment variables and saves it to the persistent `config` volume. On every subsequent start (including after image updates), the config is reloaded from the volume — no reconfiguration needed.
 
