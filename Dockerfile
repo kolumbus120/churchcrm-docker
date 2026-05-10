@@ -63,6 +63,12 @@ RUN { \
 WORKDIR /var/www/html
 EXPOSE 80
 
+# Entrypoint: auto-generates Config.php from env vars if missing
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # Healthcheck [SK: Kontrola zdravia kontajnera]
 HEALTHCHECK --interval=1m --timeout=3s --start-period=30s \
   CMD curl -f http://localhost/ || exit 1
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
