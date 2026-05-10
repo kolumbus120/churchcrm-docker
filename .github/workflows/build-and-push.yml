@@ -8,6 +8,7 @@ on:
     paths:
       - 'Dockerfile'
       - '.github/workflows/build-and-push.yml'
+      - 'DOCKERHUB_OVERVIEW.md'
   workflow_dispatch:
     inputs:
       force_latest:
@@ -146,3 +147,21 @@ jobs:
                 `To promote to \`:latest\`, run the workflow manually with **Force update :latest** checked.`,
               ].join('\n')
             });
+
+  update-dockerhub-description:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update DockerHub description
+        run: |
+          TOKEN=$(curl -s -X POST "https://hub.docker.com/v2/users/login" \
+            -H "Content-Type: application/json" \
+            -d '{"username": "${{ secrets.DOCKER_HUB_USER }}", "password": "${{ secrets.DOCKER_HUB_TOKEN }}"}' \
+            | jq -r '.token')
+          curl -s -X PATCH "https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_HUB_USER }}/churchcrm/" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"full_description\": $(jq -Rs . < DOCKERHUB_OVERVIEW.md)}"
