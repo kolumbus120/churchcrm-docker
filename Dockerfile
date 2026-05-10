@@ -45,8 +45,11 @@ RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/down
     && cp -R /tmp/churchcrm/* /var/www/html/ \
     && rm -rf /tmp/churchcrm /tmp/churchcrm.zip
 
-# Enable Apache mod_rewrite and set permissions [SK: Povolenie Apache mod_rewrite a nastavenie práv]
+# Enable Apache mod_rewrite, configure reverse proxy HTTPS forwarding, set permissions
 RUN a2enmod rewrite \
+    && echo 'SetEnvIf X-Forwarded-Proto "https" HTTPS=on' \
+       > /etc/apache2/conf-available/reverse-proxy.conf \
+    && a2enconf reverse-proxy \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
