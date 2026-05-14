@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'Dockerfile'
+      - 'sk_SK.json'
+      - 'patch_locales.php'
       - '.github/workflows/build-and-push.yml'
       - 'DOCKERHUB_OVERVIEW.md'
   workflow_dispatch:
