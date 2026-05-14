@@ -47,27 +47,8 @@ RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/down
 
 # Add Slovak translation (not yet included in release zip, will be in next CRM version)
 COPY sk_SK.json /var/www/html/locale/i18n/sk_SK.json
-RUN python3 -c "
-import json
-with open('/var/www/html/locale/locales.json', 'r') as f:
-    data = json.load(f)
-data['Slovak'] = {
-    'poEditor': 'sk',
-    'locale': 'sk_SK',
-    'languageCode': 'sk',
-    'countryCode': 'SK',
-    'nativeName': 'Slovenčina',
-    'region': 'Europe',
-    'dataTables': 'Slovak',
-    'fullCalendar': True,
-    'fullCalendarLocale': 'sk',
-    'datePicker': True,
-    'momentLocale': 'sk',
-    'isRTL': False
-}
-with open('/var/www/html/locale/locales.json', 'w') as f:
-    json.dump(data, f, ensure_ascii=False, indent=4)
-"
+COPY patch_locales.py /tmp/patch_locales.py
+RUN python3 /tmp/patch_locales.py && rm /tmp/patch_locales.py
 
 # Enable Apache mod_rewrite, configure reverse proxy HTTPS forwarding, set permissions
 RUN a2enmod rewrite \
