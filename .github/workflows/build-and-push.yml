@@ -1,8 +1,6 @@
 name: Build and Push Docker Image
 
 on:
-  schedule:
-    - cron: '0 11 * * 1'  # Every Monday at 11:00 UTC
   push:
     branches: [main]
     paths:
@@ -38,44 +36,32 @@ jobs:
       - name: Check build conditions
         id: check
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           MAJOR="${{ steps.version.outputs.major }}"
           PREV="${{ steps.version.outputs.prev_major }}"
           HUB="https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_HUB_USER }}/churchcrm/tags"
 
-          V_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$HUB/$VERSION/")
           M_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$HUB/$MAJOR/")
           P_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$HUB/$PREV/")
 
-          if [ "$V_HTTP" = "200" ] && [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "major_jump=false" >> $GITHUB_OUTPUT
-            echo "Version $VERSION already on Docker Hub - skipping"
-          elif [ "$M_HTTP" != "200" ] && [ "$P_HTTP" = "200" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+          if [ "$M_HTTP" != "200" ] && [ "$P_HTTP" = "200" ]; then
             echo "major_jump=true" >> $GITHUB_OUTPUT
             echo "Major version jump detected: $PREV to $MAJOR"
           else
-            echo "skip=false" >> $GITHUB_OUTPUT
             echo "major_jump=false" >> $GITHUB_OUTPUT
-            echo "Building version $VERSION"
+            echo "Building version ${{ steps.version.outputs.version }}"
           fi
 
       - name: Set up Docker Buildx
-        if: steps.check.outputs.skip != 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
-        if: steps.check.outputs.skip != 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Build and push (normal update or force_latest)
-        if: |
-          steps.check.outputs.skip != 'true' &&
-          (steps.check.outputs.major_jump != 'true' || inputs.force_latest == true)
+        if: steps.check.outputs.major_jump != 'true' || inputs.force_latest == true
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -88,10 +74,7 @@ jobs:
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
 
       - name: Build and push (major jump - :latest protected)
-        if: |
-          steps.check.outputs.skip != 'true' &&
-          steps.check.outputs.major_jump == 'true' &&
-          inputs.force_latest != true
+        if: steps.check.outputs.major_jump == 'true' && inputs.force_latest != true
         uses: docker/build-push-action@v5
         with:
           context: .

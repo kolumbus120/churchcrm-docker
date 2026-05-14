@@ -1,0 +1,33 @@
+name: Check for new ChurchCRM version
+
+on:
+  schedule:
+    - cron: '0 11 * * *'  # Every day at 11:00 UTC
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if new version is available
+        id: check
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/ChurchCRM/CRM/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+          HUB_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_HUB_USER }}/churchcrm/tags/$LATEST/")
+          echo "version=$LATEST" >> $GITHUB_OUTPUT
+          if [ "$HUB_HTTP" != "200" ]; then
+            echo "new=true" >> $GITHUB_OUTPUT
+            echo "New version $LATEST not on Docker Hub - triggering build"
+          else
+            echo "new=false" >> $GITHUB_OUTPUT
+            echo "Version $LATEST already on Docker Hub - nothing to do"
+          fi
+
+      - name: Trigger build workflow
+        if: steps.check.outputs.new == 'true'
+        run: gh workflow run build-and-push.yml --ref main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
