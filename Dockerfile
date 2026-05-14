@@ -3,7 +3,7 @@ FROM php:8.4-apache
 # Metadata [SK: Metadáta obrazu]
 LABEL maintainer="kolumbus120 (with AI)"
 LABEL description="Modernized ChurchCRM Docker image with PHP 8.4, Apache and automatic updates"
-LABEL version="7.3.1"
+LABEL version="7.3.3"
 
 # Install system dependencies [SK: Inštalácia systémových závislostí]
 RUN apt-get update && apt-get install -y \
@@ -37,13 +37,37 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     zip
 
 # Download and install ChurchCRM [SK: Stiahnutie a inštalácia ChurchCRM]
-ARG CHURCHCRM_VERSION=7.3.1
+ARG CHURCHCRM_VERSION=7.3.3
 ENV CHURCHCRM_VERSION=${CHURCHCRM_VERSION}
 RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/download/${CHURCHCRM_VERSION}/ChurchCRM-${CHURCHCRM_VERSION}.zip \
     && unzip /tmp/churchcrm.zip -d /tmp/ \
     && rm -rf /var/www/html/* \
     && cp -R /tmp/churchcrm/* /var/www/html/ \
     && rm -rf /tmp/churchcrm /tmp/churchcrm.zip
+
+# Add Slovak translation (not yet included in release zip, will be in next CRM version)
+COPY sk_SK.json /var/www/html/locale/i18n/sk_SK.json
+RUN python3 -c "
+import json
+with open('/var/www/html/locale/locales.json', 'r') as f:
+    data = json.load(f)
+data['Slovak'] = {
+    'poEditor': 'sk',
+    'locale': 'sk_SK',
+    'languageCode': 'sk',
+    'countryCode': 'SK',
+    'nativeName': 'Slovenčina',
+    'region': 'Europe',
+    'dataTables': 'Slovak',
+    'fullCalendar': True,
+    'fullCalendarLocale': 'sk',
+    'datePicker': True,
+    'momentLocale': 'sk',
+    'isRTL': False
+}
+with open('/var/www/html/locale/locales.json', 'w') as f:
+    json.dump(data, f, ensure_ascii=False, indent=4)
+"
 
 # Enable Apache mod_rewrite, configure reverse proxy HTTPS forwarding, set permissions
 RUN a2enmod rewrite \
