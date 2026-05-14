@@ -47,8 +47,8 @@ RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/down
 
 # Add Slovak translation (not yet included in release zip, will be in next CRM version)
 COPY sk_SK.json /var/www/html/locale/i18n/sk_SK.json
-COPY patch_locales.py /tmp/patch_locales.py
-RUN python3 /tmp/patch_locales.py && rm /tmp/patch_locales.py
+COPY patch_locales.php /tmp/patch_locales.php
+RUN php /tmp/patch_locales.php && rm /tmp/patch_locales.php
 
 # Enable Apache mod_rewrite, configure reverse proxy HTTPS forwarding, set permissions
 RUN a2enmod rewrite \
