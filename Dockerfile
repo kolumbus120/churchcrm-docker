@@ -45,8 +45,11 @@ RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/down
     && cp -R /tmp/churchcrm/* /var/www/html/ \
     && rm -rf /tmp/churchcrm /tmp/churchcrm.zip
 
-# Add Slovak translation (not yet included in release zip, will be in next CRM version)
-COPY sk_SK.json /var/www/html/locale/i18n/sk_SK.json
+# Fix Slovak locale metadata in locales.json.
+# Since 7.4.0 the release zip ships sk_SK.json and a "Slovak" entry natively, so we
+# no longer copy our own translation (release one is newer). But the shipped entry has
+# dataTables="Slovak" (wrong, should be "sk") and lacks nativeName/region/momentLocale,
+# which this patch corrects.
 COPY patch_locales.php /tmp/patch_locales.php
 RUN php /tmp/patch_locales.php && rm /tmp/patch_locales.php
 
