@@ -28,6 +28,6 @@ jobs:
 
       - name: Trigger build workflow
         if: steps.check.outputs.new == 'true'
-        run: gh workflow run build-and-push.yml --ref main
+        run: gh workflow run build-and-push.yml --ref main -R ${{ github.repository }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
