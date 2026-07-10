@@ -1,7 +1,5 @@
 # ChurchCRM Docker Hub Repository Overview
 
-**Toto je Repository Description pre Docker Hub - kopíruj do polia "Full Description"**
-
 ---
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/kolumbus120/churchcrm.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
