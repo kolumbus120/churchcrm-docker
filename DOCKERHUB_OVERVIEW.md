@@ -111,7 +111,7 @@ Access ChurchCRM at: **http://localhost:8080**
 |-----|-------------|--------------|
 | `latest` | Latest stable version (auto-updates) | amd64, arm64 |
 | `7` | Latest 7.x version | amd64, arm64 |
-| `7.4.0` | Specific ChurchCRM version | amd64, arm64 |
+| `7.4.1` | Specific ChurchCRM version | amd64, arm64 |
 
 ---
 

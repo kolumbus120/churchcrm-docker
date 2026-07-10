@@ -3,7 +3,7 @@ FROM php:8.4-apache
 # Metadata [SK: Metadáta obrazu]
 LABEL maintainer="kolumbus120 (with AI)"
 LABEL description="Modernized ChurchCRM Docker image with PHP 8.4, Apache and automatic updates"
-LABEL version="7.4.0"
+LABEL version="7.4.1"
 
 # Install system dependencies [SK: Inštalácia systémových závislostí]
 RUN apt-get update && apt-get install -y \
@@ -37,7 +37,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     zip
 
 # Download and install ChurchCRM [SK: Stiahnutie a inštalácia ChurchCRM]
-ARG CHURCHCRM_VERSION=7.4.0
+ARG CHURCHCRM_VERSION=7.4.1
 ENV CHURCHCRM_VERSION=${CHURCHCRM_VERSION}
 RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/download/${CHURCHCRM_VERSION}/ChurchCRM-${CHURCHCRM_VERSION}.zip \
     && unzip /tmp/churchcrm.zip -d /tmp/ \
