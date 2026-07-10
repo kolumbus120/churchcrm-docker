@@ -27,8 +27,16 @@ jobs:
 
       - name: Get latest ChurchCRM version
         id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          LATEST=$(curl -s https://api.github.com/repos/ChurchCRM/CRM/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+          LATEST=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/ChurchCRM/CRM/releases/latest \
+            | jq -r '.tag_name' | sed 's/^v//')
+          if [ -z "$LATEST" ] || [ "$LATEST" = "null" ]; then
+            echo "::error::Could not resolve latest ChurchCRM version from GitHub API (got '$LATEST')"
+            exit 1
+          fi
           MAJOR=$(echo "$LATEST" | cut -d. -f1)
           echo "version=$LATEST" >> $GITHUB_OUTPUT
           echo "major=$MAJOR" >> $GITHUB_OUTPUT

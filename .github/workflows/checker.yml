@@ -14,8 +14,16 @@ jobs:
     steps:
       - name: Check if new version is available
         id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          LATEST=$(curl -s https://api.github.com/repos/ChurchCRM/CRM/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+          LATEST=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/ChurchCRM/CRM/releases/latest \
+            | jq -r '.tag_name' | sed 's/^v//')
+          if [ -z "$LATEST" ] || [ "$LATEST" = "null" ]; then
+            echo "::error::Could not resolve latest ChurchCRM version from GitHub API (got '$LATEST')"
+            exit 1
+          fi
           HUB_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_HUB_USER }}/churchcrm/tags/$LATEST/")
           echo "version=$LATEST" >> $GITHUB_OUTPUT
           if [ "$HUB_HTTP" != "200" ]; then
