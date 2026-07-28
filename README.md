@@ -70,7 +70,7 @@ For all available tags, see: [Docker Hub Tags](https://hub.docker.com/r/kolumbus
 
 This image is **automatically updated** in the following cases:
 
-1. **New ChurchCRM release** - Pipeline checks GitHub releases daily and rebuilds with the latest version
+1. **New ChurchCRM release** - Pipeline checks GitHub releases every Tuesday and Friday (11:00 UTC) and rebuilds when a new version appears
 2. **PHP security patches** - Base image (php:8.4-apache) is automatically updated on Docker Hub
 3. **OS security patches** - Debian base image receives automatic security updates
 
@@ -115,7 +115,7 @@ services:
 | Auto-updates | ❌ No | **✅ Yes** |
 | Security Patches | ❌ No | **✅ Yes** |
 | Multi-arch | ❌ No | **✅ Yes** (amd64, arm64) |
-| Last Update | 2020 | **Daily** |
+| Last Update | 2020 | **Twice weekly** |
 | Maintenance | ❌ Abandoned | **✅ Active** |
 
 ---

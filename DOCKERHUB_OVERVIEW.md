@@ -26,7 +26,7 @@ This image provides a complete, production-ready ChurchCRM installation with all
   - pdo, pdo_mysql, mysqli, curl, fileinfo, filter, gd, gettext, iconv, mbstring, bcmath, zip, zlib, session, intl
 - **Auto-configuration** — no installer wizard needed, `Config.php` is generated automatically from environment variables on first start
 - **Automatic updates** via CI/CD pipeline:
-  - New ChurchCRM versions (daily check at 2:00 UTC)
+  - New ChurchCRM versions (checked every Tuesday and Friday at 11:00 UTC)
   - PHP security patches (from Docker Hub base image)
   - OS security updates
 - **Multi-architecture** support (amd64, arm64)
@@ -117,7 +117,7 @@ Access ChurchCRM at: **http://localhost:8080**
 
 This image is **automatically rebuilt and pushed** in the following cases:
 
-1. New ChurchCRM release - Pipeline checks GitHub releases daily at 2:00 UTC
+1. New ChurchCRM release - Pipeline checks GitHub releases every Tuesday and Friday at 11:00 UTC and rebuilds only when a new version appears
 2. PHP security patches - Base image (php:8.4-apache) auto-updates on Docker Hub
 3. OS security patches - Debian Bookworm base receives automatic updates
 
@@ -128,11 +128,11 @@ This image is **automatically rebuilt and pushed** in the following cases:
 | Feature | churchcrm/crm | kolumbus120/churchcrm |
 |---------|---------------|------------------|
 | PHP Version | 5.6 (EOL) | **8.4** (Latest) |
-| Auto-updates | No | **Yes** (Daily) |
+| Auto-updates | No | **Yes** (Twice weekly) |
 | Security Patches | No | **Yes** |
 | Multi-arch | No | **Yes** (amd64, arm64) |
 | All PHP Extensions | Missing some | **All required** |
-| Last Update | 2020 | **Daily** |
+| Last Update | 2020 | **Twice weekly** |
 | Maintenance | Abandoned | **Active** |
 
 ---
