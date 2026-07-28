@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'Dockerfile'
+      - 'entrypoint.sh'
       - 'patch_locales.php'
       - '.github/workflows/build-and-push.yml'
       - 'DOCKERHUB_OVERVIEW.md'

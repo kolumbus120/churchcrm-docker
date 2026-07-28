@@ -16,7 +16,7 @@ if [ ! -f "$PERSISTENT_CONFIG" ]; then
 \$sDATABASE = '${MYSQL_DB_NAME:-churchcrm}';
 \$sRootPath = '';
 \$bLockURL = FALSE;
-\$URL[0] = '';
+\$URL[0] = '${CHURCHCRM_URL:-}';
 error_reporting(E_ERROR);
 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'LoadConfigs.php');
 EOF
