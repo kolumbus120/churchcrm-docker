@@ -68,11 +68,12 @@ For all available tags, see: [Docker Hub Tags](https://hub.docker.com/r/kolumbus
 
 ## 🔄 Automatic Updates
 
-This image is **automatically updated** in the following cases:
+Every Tuesday and Friday at 11:00 UTC the pipeline checks two things and rebuilds if either changed:
 
-1. **New ChurchCRM release** - Pipeline checks GitHub releases every Tuesday and Friday (11:00 UTC) and rebuilds when a new version appears
-2. **PHP security patches** - Base image (php:8.4-apache) is automatically updated on Docker Hub
-3. **OS security patches** - Debian base image receives automatic security updates
+1. **New ChurchCRM release** - a new version on GitHub that is not yet on Docker Hub
+2. **PHP and OS security patches** - a new digest of the `php:8.4-apache` base image, which carries both PHP and Debian updates
+
+If neither changed, no image is pushed — the digest of `:latest` stays the same, so Watchtower and friends will not restart your container for nothing.
 
 ### How to Get Updates
 

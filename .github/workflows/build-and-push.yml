@@ -45,6 +45,33 @@ jobs:
           echo "major=$MAJOR" >> $GITHUB_OUTPUT
           echo "prev_major=$((MAJOR - 1))" >> $GITHUB_OUTPUT
 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Resolve base image digest
+        id: base
+        run: |
+          IMAGE="${{ secrets.DOCKER_HUB_USER }}/churchcrm:latest"
+          CURRENT=$(docker buildx imagetools inspect php:8.4-apache --format '{{.Manifest.Digest}}')
+          if [ -z "$CURRENT" ]; then
+            echo "::error::Could not resolve the php:8.4-apache digest"
+            exit 1
+          fi
+          # Empty when :latest predates this label - treated as "needs rebuild".
+          BUILT=$(docker buildx imagetools inspect "$IMAGE" \
+            --format '{{index (index .Image "linux/amd64").Config.Labels "org.opencontainers.image.base.digest"}}' 2>/dev/null || true)
+          echo "digest=$CURRENT" >> $GITHUB_OUTPUT
+          echo "Base image now:   $CURRENT"
+          echo "Base image built: ${BUILT:-<none recorded>}"
+          if [ "$CURRENT" = "$BUILT" ]; then
+            echo "patched=false" >> $GITHUB_OUTPUT
+          else
+            echo "patched=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Check build conditions
         id: check
         run: |
@@ -53,16 +80,19 @@ jobs:
           PREV="${{ steps.version.outputs.prev_major }}"
           HUB="https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_HUB_USER }}/churchcrm/tags"
 
-          # On the schedule we only build when the latest release is missing on
-          # Docker Hub. Push and manual runs always build.
+          # On the schedule we build for a new ChurchCRM release or a patched
+          # base image. Push and manual runs always build.
           if [ "${{ github.event_name }}" = "schedule" ]; then
             V_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$HUB/$VERSION/")
-            if [ "$V_HTTP" = "200" ]; then
+            if [ "$V_HTTP" != "200" ]; then
+              echo "Version $VERSION not on Docker Hub - building"
+            elif [ "${{ steps.base.outputs.patched }}" = "true" ]; then
+              echo "php:8.4-apache changed - rebuilding $VERSION for security patches"
+            else
               echo "should_build=false" >> $GITHUB_OUTPUT
-              echo "Version $VERSION already on Docker Hub - nothing to do"
+              echo "Version $VERSION already on Docker Hub and base image unchanged - nothing to do"
               exit 0
             fi
-            echo "Version $VERSION not on Docker Hub - building"
           fi
           echo "should_build=true" >> $GITHUB_OUTPUT
 
@@ -81,13 +111,6 @@ jobs:
         if: steps.check.outputs.should_build == 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
-        if: steps.check.outputs.should_build == 'true'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USER }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-
       - name: Build and push (normal update or force_latest)
         if: |
           steps.check.outputs.should_build == 'true' &&
@@ -95,7 +118,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          build-args: CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
+          build-args: |
+            CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
+            BASE_IMAGE=php:8.4-apache@${{ steps.base.outputs.digest }}
+            BASE_DIGEST=${{ steps.base.outputs.digest }}
           platforms: linux/amd64,linux/arm64
           push: true
           provenance: false
@@ -113,7 +139,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          build-args: CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
+          build-args: |
+            CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
+            BASE_IMAGE=php:8.4-apache@${{ steps.base.outputs.digest }}
+            BASE_DIGEST=${{ steps.base.outputs.digest }}
           platforms: linux/amd64,linux/arm64
           push: true
           provenance: false

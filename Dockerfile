@@ -1,9 +1,15 @@
-FROM php:8.4-apache
+# The CI resolves the current php:8.4-apache digest and pins it here, so the
+# base.digest label below cannot drift from what was actually built.
+ARG BASE_IMAGE=php:8.4-apache
+FROM ${BASE_IMAGE}
 
 # Metadata [SK: Metadáta obrazu]
+ARG BASE_DIGEST=unknown
 LABEL maintainer="kolumbus120 (with AI)"
 LABEL description="Modernized ChurchCRM Docker image with PHP 8.4, Apache and automatic updates"
 LABEL version="7.5.1"
+LABEL org.opencontainers.image.base.name="php:8.4-apache"
+LABEL org.opencontainers.image.base.digest="${BASE_DIGEST}"
 
 # Install system dependencies [SK: Inštalácia systémových závislostí]
 RUN apt-get update && apt-get install -y \

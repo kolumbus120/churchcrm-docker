@@ -25,10 +25,9 @@ This image provides a complete, production-ready ChurchCRM installation with all
 - **All required PHP extensions** for ChurchCRM:
   - pdo, pdo_mysql, mysqli, curl, fileinfo, filter, gd, gettext, iconv, mbstring, bcmath, zip, zlib, session, intl
 - **Auto-configuration** — no installer wizard needed, `Config.php` is generated automatically from environment variables on first start
-- **Automatic updates** via CI/CD pipeline:
-  - New ChurchCRM versions (checked every Tuesday and Friday at 11:00 UTC)
-  - PHP security patches (from Docker Hub base image)
-  - OS security updates
+- **Automatic updates** via CI/CD pipeline, checked every Tuesday and Friday at 11:00 UTC:
+  - New ChurchCRM versions
+  - PHP and OS security patches (rebuilt when the php:8.4-apache base image changes)
 - **Multi-architecture** support (amd64, arm64)
 - **Optimized PHP settings** (memory_limit=512M, upload_max_filesize=100M)
 - **Persistent volumes** for configuration, images, and backups
@@ -115,11 +114,12 @@ Access ChurchCRM at: **http://localhost:8080**
 
 ## Automatic Updates
 
-This image is **automatically rebuilt and pushed** in the following cases:
+Every Tuesday and Friday at 11:00 UTC the pipeline checks two things and rebuilds if either changed:
 
-1. New ChurchCRM release - Pipeline checks GitHub releases every Tuesday and Friday at 11:00 UTC and rebuilds only when a new version appears
-2. PHP security patches - Base image (php:8.4-apache) auto-updates on Docker Hub
-3. OS security patches - Debian Bookworm base receives automatic updates
+1. New ChurchCRM release - a new version on GitHub that is not yet on Docker Hub
+2. PHP and OS security patches - a new digest of the php:8.4-apache base image, which carries both PHP and Debian Bookworm updates
+
+If neither changed, nothing is pushed and the digest of `latest` stays the same, so watchtower-style updaters will not restart your container for nothing. The base image digest each build was made from is recorded in the `org.opencontainers.image.base.digest` label.
 
 ---
 
