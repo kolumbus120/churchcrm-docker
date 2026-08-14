@@ -7,7 +7,7 @@ FROM ${BASE_IMAGE}
 ARG BASE_DIGEST=unknown
 LABEL maintainer="kolumbus120 (with AI)"
 LABEL description="Modernized ChurchCRM Docker image with PHP 8.4, Apache and automatic updates"
-LABEL version="7.5.1"
+LABEL version="7.6.0"
 LABEL org.opencontainers.image.base.name="php:8.4-apache"
 LABEL org.opencontainers.image.base.digest="${BASE_DIGEST}"
 
@@ -43,7 +43,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     zip
 
 # Download and install ChurchCRM [SK: Stiahnutie a inštalácia ChurchCRM]
-ARG CHURCHCRM_VERSION=7.5.1
+ARG CHURCHCRM_VERSION=7.6.0
 ENV CHURCHCRM_VERSION=${CHURCHCRM_VERSION}
 RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/download/${CHURCHCRM_VERSION}/ChurchCRM-${CHURCHCRM_VERSION}.zip \
     && unzip /tmp/churchcrm.zip -d /tmp/ \
