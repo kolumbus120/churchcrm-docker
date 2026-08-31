@@ -60,7 +60,7 @@ Access ChurchCRM at: **http://localhost:8080**
 |-----|-------------|
 | `latest` | Latest stable version (auto-updates) |
 | `7` | Latest 7.x version |
-| `7.6.0` | Specific ChurchCRM version |
+| `7.6.2` | Specific ChurchCRM version |
 
 For all available tags, see: [Docker Hub Tags](https://hub.docker.com/r/kolumbus120/churchcrm/tags)
 
@@ -325,4 +325,4 @@ For support, please open an issue on [GitHub](https://github.com/kolumbus120/chu
 
 **Maintained by:** [kolumbus120](https://github.com/kolumbus120)
 
-*Last updated: 2026-08-14*
+*Last updated: 2026-08-31*
