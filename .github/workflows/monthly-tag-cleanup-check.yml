@@ -1,0 +1,176 @@
+name: Monthly Tag Cleanup Check
+
+on:
+  schedule:
+    - cron: '0 12 1 * *'  # 1st of every month at 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check-old-tags:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Docker Hub tags
+        id: check-tags
+        run: |
+          REPO="kolumbus120/churchcrm"
+          echo "Fetching tags from Docker Hub..."
+          TAGS_JSON=$(curl -s "https://hub.docker.com/v2/repositories/${REPO}/tags?page_size=100")
+
+          python3 << 'PYEOF'
+          import json, os
+          from datetime import datetime, timezone, timedelta
+
+          data = json.loads('''$TAGS_JSON''')
+          now = datetime.now(timezone.utc)
+
+          monitor_threshold = timedelta(days=270)  # 9 months
+          delete_threshold = timedelta(days=365)   # 12 months
+
+          old_tags = []
+          delete_candidates = []
+
+          for tag in data['results']:
+              name = tag['name']
+              
+              # Skip major version tags (latest, 7, 8, 7.6, 8.0, etc.)
+              # These are tags that point to floating versions
+              if name == 'latest':
+                  continue
+              parts = name.split('.')
+              # If tag has 1 or 2 parts and all are digits, it's a major/minor version tag
+              if all(p.isdigit() for p in parts) and len(parts) <= 2:
+                  continue
+              
+              last_pulled_str = tag.get('tag_last_pulled', '')
+              if not last_pulled_str:
+                  continue
+              
+              last_pulled = datetime.fromisoformat(last_pulled_str.replace('Z', '+00:00'))
+              age = now - last_pulled
+              
+              # Check full version tags (x.y.z format)
+              if len(parts) >= 2 and name.replace('.', '').isdigit():
+                  if age > delete_threshold:
+                      delete_candidates.append({
+                          'name': name,
+                          'last_pulled': last_pulled.strftime('%Y-%m-%d'),
+                          'age_days': age.days
+                      })
+                  elif age > monitor_threshold:
+                      old_tags.append({
+                          'name': name,
+                          'last_pulled': last_pulled.strftime('%Y-%m-%d'),
+                          'age_days': age.days
+                      })
+
+          old_tags.sort(key=lambda x: x['age_days'], reverse=True)
+          delete_candidates.sort(key=lambda x: x['age_days'], reverse=True)
+
+          # Count minor version tags (full versions like x.y.z)
+          total_minor = sum(
+              1 for t in data['results'] 
+              if t['name'] != 'latest' 
+              and not (all(p.isdigit() for p in t['name'].split('.')) and len(t['name'].split('.')) <= 2)
+              and t['name'].replace('.', '').isdigit()
+          )
+
+          report_lines = []
+          report_lines.append('=== DOCKER HUB TAG CLEANUP REPORT ===')
+          report_lines.append(f'Generated: {now.strftime("%Y-%m-%d %H:%M UTC")}')
+          report_lines.append('')
+          report_lines.append(f'Total minor version tags: {total_minor}')
+          report_lines.append('')
+
+          if old_tags:
+              report_lines.append('OLD TAGS (monitor, not pulled for >9 months):')
+              for t in old_tags:
+                  report_lines.append(f'  - {t["name"]}: Last pulled {t["last_pulled"]} ({t["age_days"]} days ago)')
+              report_lines.append('')
+          else:
+              report_lines.append('No old tags to monitor')
+              report_lines.append('')
+
+          if delete_candidates:
+              report_lines.append('DELETE CANDIDATES (not pulled for >12 months):')
+              for t in delete_candidates:
+                  report_lines.append(f'  - {t["name"]}: Last pulled {t["last_pulled"]} ({t["age_days"]} days ago)')
+              report_lines.append('')
+              report_lines.append('ACTION NEEDED: Old tags should be deleted')
+              action_needed = 'true'
+          elif old_tags:
+              report_lines.append('MONITOR: Some tags are getting old')
+              action_needed = 'false'
+          else:
+              report_lines.append('ALL GOOD: All tags are active')
+              action_needed = 'false'
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f'old_tags={json.dumps(old_tags)}\n')
+              f.write(f'delete_candidates={json.dumps(delete_candidates)}\n')
+              f.write(f'action_needed={action_needed}\n')
+              f.write(f'report={"\\n".join(report_lines)}\n')
+          PYEOF
+
+      - name: Create GitHub Issue if action needed
+        if: steps.check-tags.outputs.action_needed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deleteCandidates = JSON.parse('${{ steps.check-tags.outputs.delete_candidates }}');
+            const report = '${{ steps.check-tags.outputs.report }}';
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'cleanup'
+            });
+
+            const existingIssue = issues.find(issue => 
+              issue.title.includes('Docker Tag Cleanup')
+            );
+
+            const body = `## Docker Tag Cleanup Required
+
+@kolumbus120 Old tags should be deleted from Docker Hub (not pulled for >12 months).
+
+### Tags to delete:
+${deleteCandidates.map(t => `- \`${t.name}\`: Last pulled ${t.last_pulled} (${t.age_days} days ago)`).join('\n')}
+
+### Command to delete:
+\`\`\`bash
+${deleteCandidates.map(t => `docker manifest rm kolumbus120/churchcrm:${t.name}`).join('\n')}
+\`\`\`
+
+---
+*Generated by automated monthly check*
+
+${report}`;
+
+            if (existingIssue) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Docker Tag Cleanup: Old tags should be deleted',
+                body: body,
+                assignee: 'kolumbus120',
+                labels: ['cleanup', 'maintenance', 'automated']
+              });
+            }
+
+      - name: Print report
+        run: |
+          echo "${{ steps.check-tags.outputs.report }}"
