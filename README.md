@@ -163,7 +163,7 @@ services:
   churchcrm:
     volumes:
       - ./data/config:/var/www/html/config
-      - ./data/images:/var/www/html/images
+      - ./data/Images:/var/www/html/Images
       - ./data/backup:/var/www/html/backup
   churchcrm-db:
     volumes:
@@ -173,9 +173,13 @@ services:
 | Volume | Description | Recommended |
 |--------|-------------|-------------|
 | `/var/www/html/config/` | ChurchCRM configuration | ✅ Yes |
-| `/var/www/html/images/` | Uploaded images | ✅ Yes |
+| `/var/www/html/Images/` | Uploaded photos (**capital `I`**, see note below) | ✅ Yes |
 | `/var/www/html/backup/` | Backups | ⚠️ Optional |
 | `/var/lib/mysql/` | MySQL/MariaDB data | ✅ Yes |
+
+> **Important: the photo directory is `Images` with a capital `I`.** ChurchCRM writes member and family photos to `/var/www/html/Images`. Older versions of this README and the example compose files mounted `/var/www/html/images` (lowercase), which is a different directory on Linux, so uploaded photos lived only in the container and were lost when it was recreated (for example on every image update).
+>
+> **If you use the lowercase mount:** change it to `/var/www/html/Images`. On first start the image fills an empty `Images` mount with the default assets (logos, login photo, `Person/`, `Family/`) and never overwrites existing files. Photos uploaded earlier live inside the old container: before recreating it, copy them out with `docker cp <container>:/var/www/html/Images/. /path/to/Images/` (and `chown -R 33:33 /path/to/Images`).
 
 ---
 
@@ -284,7 +288,7 @@ Since the hardening release the container runs as `www-data` and Apache still li
         - net.ipv4.ip_unprivileged_port_start=0
   ```
   (or `docker run --sysctl net.ipv4.ip_unprivileged_port_start=0 ...`), or use the `7.7.1-rc2` variant above, which listens on 8080 and needs neither sysctl nor capabilities.
-- **Bind-mounted directories** (`config`, `images`, `backup`) must be writable by UID/GID 33 (`www-data`). If uploads or backups fail after the upgrade, fix it on the host: `chown -R 33:33 /path/to/config /path/to/images /path/to/backup`.
+- **Bind-mounted directories** (`config`, `Images`, `backup`) must be writable by UID/GID 33 (`www-data`). If uploads fail after the upgrade, fix it on the host: `chown -R 33:33 /path/to/config /path/to/Images /path/to/backup`.
 - **Language menu:** the Slovak entry now comes from the upstream release, so the menu shows "Slovak" instead of "Slovenčina - Slovak".
 
 ## 🛡️ Security Best Practices
