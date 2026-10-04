@@ -169,6 +169,14 @@ volumes:
 
 ---
 
+## Upgrading to the non-root image (7.7.1+)
+
+- Pin a version tag (e.g. `7.7.1`) in production, avoid unattended auto-updates, back up the database and `config`/`images`/`backup` first. Roll back with `:7.7.0`.
+- Port 80 without root needs `net.ipv4.ip_unprivileged_port_start=0` (default in Docker 20.10+). On older Docker, Kubernetes or some NAS systems add `sysctls: [net.ipv4.ip_unprivileged_port_start=0]`.
+- Bind-mounted `config`, `images` and `backup` directories must be writable by UID/GID 33 (`chown -R 33:33 ...`).
+
+---
+
 ## Security
 
 - Runs as non-root (`www-data`), still on port 80
