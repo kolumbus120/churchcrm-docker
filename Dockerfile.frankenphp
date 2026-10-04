@@ -37,9 +37,16 @@ RUN { \
 
 COPY frankenphp/Caddyfile /etc/caddy/Caddyfile
 COPY entrypoint-frankenphp.sh /usr/local/bin/entrypoint.sh
+
+# Run as non-root from the start (no root entrypoint). The base image gives the binary
+# CAP_NET_BIND_SERVICE as a file capability; we listen on 8080, so drop it. Otherwise the
+# binary cannot start under `--cap-drop ALL`.
 RUN chmod +x /usr/local/bin/entrypoint.sh \
-    && mkdir -p /var/www/html/config /data /config \
+    && setcap -r /usr/local/bin/frankenphp \
+    && mkdir -p /var/www/html/config /var/www/html/backup /data /config \
     && chown -R www-data:www-data /var/www/html /data /config
+
+USER www-data
 
 ENV XDG_DATA_HOME=/data XDG_CONFIG_HOME=/config
 WORKDIR /var/www/html

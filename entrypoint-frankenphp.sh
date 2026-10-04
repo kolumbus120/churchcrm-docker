@@ -41,11 +41,7 @@ if [ ! -f "$PERSISTENT_CONFIG" ]; then
 fi
 
 cp "$PERSISTENT_CONFIG" "$ACTIVE_CONFIG"
-# Mounted volumes may be root-owned; PHP runs as www-data
-chown -R www-data:www-data /var/www/html/config /var/www/html/images /var/www/html/backup /data /config 2>/dev/null || true
-chown www-data:www-data "$ACTIVE_CONFIG"
 chmod 640 "$PERSISTENT_CONFIG" "$ACTIVE_CONFIG"
 
-# Drop privileges: Caddy listens on 8080, so no NET_BIND_SERVICE is needed
-exec setpriv --reuid=www-data --regid=www-data --init-groups \
-    frankenphp run --config /etc/caddy/Caddyfile --adapter caddyfile
+# Runs as www-data (USER in the Dockerfile); Caddy listens on 8080, no extra capabilities
+exec frankenphp run --config /etc/caddy/Caddyfile --adapter caddyfile
