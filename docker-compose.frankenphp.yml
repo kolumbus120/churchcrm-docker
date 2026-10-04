@@ -1,0 +1,45 @@
+# EXPERIMENTAL: FrankenPHP variant. Stable setup is docker-compose.yml (Apache).
+services:
+  churchcrm:
+    image: kolumbus120/churchcrm-frankenphp:latest
+    container_name: churchcrm-app
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    environment:
+      - MYSQL_DB_HOST=churchcrm-db
+      - MYSQL_DB_NAME=churchcrm
+      # Public URL, REQUIRED (otherwise "Invalid URL" error), e.g. https://crm.example.com/
+      - CHURCHCRM_URL=${CHURCHCRM_URL:?Set CHURCHCRM_URL}
+      - MYSQL_DB_USER=${MYSQL_USER}
+      - MYSQL_DB_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - churchcrm_config:/var/www/html/config
+      - churchcrm_images:/var/www/html/images
+      - churchcrm_backup:/var/www/html/backup
+    depends_on:
+      churchcrm-db:
+        condition: service_healthy
+
+  churchcrm-db:
+    image: mariadb:11.4
+    container_name: churchcrm-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_DATABASE=churchcrm
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test: [CMD, healthcheck.sh, '--connect', '--innodb_initialized']
+      timeout: 5s
+    volumes:
+      - churchcrm_db:/var/lib/mysql
+
+volumes:
+  churchcrm_config:
+  churchcrm_images:
+  churchcrm_backup:
+  churchcrm_db:
