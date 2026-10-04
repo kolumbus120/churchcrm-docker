@@ -1,0 +1,52 @@
+# EXPERIMENTAL: ChurchCRM on FrankenPHP (Caddy + PHP 8.4 in one binary).
+# Community-maintained, NOT tested in production. The stable image is ./Dockerfile (Apache).
+ARG BASE_IMAGE=dunglas/frankenphp:1-php8.4
+FROM ${BASE_IMAGE}
+
+LABEL maintainer="kolumbus120 (with AI)"
+LABEL description="EXPERIMENTAL ChurchCRM image on FrankenPHP (PHP 8.4)"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    gettext \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN install-php-extensions \
+    bcmath exif gd gettext intl mbstring mysqli opcache pdo_mysql soap sockets zip
+
+ARG CHURCHCRM_VERSION=7.7.1
+ENV CHURCHCRM_VERSION=${CHURCHCRM_VERSION}
+RUN curl -fL -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/download/${CHURCHCRM_VERSION}/ChurchCRM-${CHURCHCRM_VERSION}.zip \
+    && unzip -q /tmp/churchcrm.zip -d /tmp/ \
+    && rm -rf /app/public/* /var/www/html \
+    && mkdir -p /var/www/html \
+    && cp -R /tmp/churchcrm/. /var/www/html/ \
+    && rm -rf /tmp/churchcrm /tmp/churchcrm.zip
+
+COPY patch_locales.php /tmp/patch_locales.php
+RUN php /tmp/patch_locales.php && rm /tmp/patch_locales.php
+
+RUN { \
+    echo 'memory_limit=512M'; \
+    echo 'upload_max_filesize=100M'; \
+    echo 'post_max_size=100M'; \
+    echo 'max_execution_time=300'; \
+    echo 'short_open_tag=On'; \
+    echo 'date.timezone=Europe/Bratislava'; \
+    } > $PHP_INI_DIR/conf.d/churchcrm-limits.ini
+
+COPY frankenphp/Caddyfile /etc/caddy/Caddyfile
+COPY entrypoint-frankenphp.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh \
+    && mkdir -p /var/www/html/config /data /config \
+    && chown -R www-data:www-data /var/www/html /data /config
+
+ENV XDG_DATA_HOME=/data XDG_CONFIG_HOME=/config
+WORKDIR /var/www/html
+EXPOSE 8080
+
+HEALTHCHECK --interval=1m --timeout=3s --start-period=30s \
+  CMD curl -f http://localhost:8080/ || exit 1
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
