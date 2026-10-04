@@ -7,7 +7,6 @@ on:
       - 'Dockerfile.frankenphp'
       - 'entrypoint-frankenphp.sh'
       - 'frankenphp/**'
-      - 'patch_locales.php'
       - '.github/workflows/build-frankenphp.yml'
   workflow_dispatch:
 

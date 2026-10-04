@@ -24,8 +24,7 @@ RUN curl -fL -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/dow
     && cp -R /tmp/churchcrm/. /var/www/html/ \
     && rm -rf /tmp/churchcrm /tmp/churchcrm.zip
 
-COPY patch_locales.php /tmp/patch_locales.php
-RUN php /tmp/patch_locales.php && rm /tmp/patch_locales.php
+# Slovak (sk_SK) ships natively in the release zip since 7.4.0, no patching needed.
 
 RUN { \
     echo 'memory_limit=512M'; \
