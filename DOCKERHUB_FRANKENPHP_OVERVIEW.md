@@ -39,6 +39,10 @@ services:
   churchcrm:
     image: kolumbus120/churchcrm-frankenphp:latest
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     ports:
       - '8080:8080'
     environment:
@@ -49,8 +53,7 @@ services:
       - CHURCHCRM_URL=${CHURCHCRM_URL}
     volumes:
       - churchcrm_config:/var/www/html/config
-      - churchcrm_images:/var/www/html/images
-      - churchcrm_backup:/var/www/html/backup
+      - churchcrm_images:/var/www/html/Images
     depends_on:
       churchcrm-db:
         condition: service_healthy
@@ -73,7 +76,6 @@ services:
 volumes:
   churchcrm_config:
   churchcrm_images:
-  churchcrm_backup:
   churchcrm_db:
 ```
 
@@ -105,12 +107,11 @@ Values with quotes, backslashes or `$` are escaped correctly.
 | Path | Content |
 |---|---|
 | `/var/www/html/config` | generated `Config.php` |
-| `/var/www/html/images` | uploaded photos |
-| `/var/www/html/backup` | backups |
+| `/var/www/html/Images` | uploaded photos (**capital I**; a lowercase `images` mount does not persist them) |
 
 ## Reverse proxy and HTTPS
 
-The container speaks plain HTTP on **8080** and runs as a non-root user. Put a TLS reverse
+The container speaks plain HTTP on **8080**. It runs as **`www-data` (UID 33) from the start** (`USER www-data`, no root entrypoint), so it works with `--user`, Kubernetes `runAsNonRoot`, `--cap-drop ALL` and `no-new-privileges`. Bind mounts must be writable by UID/GID 33 (`chown -R 33:33 ...`). Put a TLS reverse
 proxy in front of it and send `X-Forwarded-Proto: https`; the image maps it to PHP's
 `HTTPS=on`. Caddy's automatic HTTPS is disabled.
 
@@ -126,7 +127,7 @@ proxy in front of it and send `X-Forwarded-Proto: https`; the image maps it to P
 ## Tested / not tested
 
 Tested: first start, login, logout and re-login, redirect loop check, deny rules, public
-API, `X-Forwarded-Proto`, non-root process, passwords with special characters.
+API, `X-Forwarded-Proto`, non-root process (also with `--cap-drop ALL` and `no-new-privileges`), passwords with special characters.
 
 **Not tested:** anything after the forced password change (people, families, finance,
 plugins, kiosk), photo upload, backup/restore, upgrades, behind a real reverse proxy,

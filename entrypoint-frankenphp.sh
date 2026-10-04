@@ -40,12 +40,17 @@ if [ ! -f "$PERSISTENT_CONFIG" ]; then
     echo "[ChurchCRM] Config.php generated."
 fi
 
+# Seed a fresh Images/ mount with the default assets (logos, login photo, Person/, Family/).
+# Existing files are never overwritten (--skip-old-files).
+if [ -d /opt/churchcrm-Images.dist ]; then
+    mkdir -p /var/www/html/Images 2>/dev/null || true
+    (cd /opt/churchcrm-Images.dist && tar cf - .) \
+        | tar xf - --skip-old-files -C /var/www/html/Images 2>/dev/null \
+        || echo "[ChurchCRM] WARNING: could not populate /var/www/html/Images, check that it is writable by UID 33" >&2
+fi
+
 cp "$PERSISTENT_CONFIG" "$ACTIVE_CONFIG"
-# Mounted volumes may be root-owned; PHP runs as www-data
-chown -R www-data:www-data /var/www/html/config /var/www/html/images /var/www/html/backup /data /config 2>/dev/null || true
-chown www-data:www-data "$ACTIVE_CONFIG"
 chmod 640 "$PERSISTENT_CONFIG" "$ACTIVE_CONFIG"
 
-# Drop privileges: Caddy listens on 8080, so no NET_BIND_SERVICE is needed
-exec setpriv --reuid=www-data --regid=www-data --init-groups \
-    frankenphp run --config /etc/caddy/Caddyfile --adapter caddyfile
+# Runs as www-data (USER in the Dockerfile); Caddy listens on 8080, no extra capabilities
+exec frankenphp run --config /etc/caddy/Caddyfile --adapter caddyfile

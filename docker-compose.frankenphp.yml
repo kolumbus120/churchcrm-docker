@@ -4,6 +4,10 @@ services:
     image: kolumbus120/churchcrm-frankenphp:latest
     container_name: churchcrm-app
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     ports:
       - '8080:8080'
     environment:
@@ -15,8 +19,8 @@ services:
       - MYSQL_DB_PASSWORD=${MYSQL_PASSWORD}
     volumes:
       - churchcrm_config:/var/www/html/config
-      - churchcrm_images:/var/www/html/images
-      - churchcrm_backup:/var/www/html/backup
+      # ChurchCRM stores photos in Images/ (capital I); lowercase 'images' would not persist them
+      - churchcrm_images:/var/www/html/Images
     depends_on:
       churchcrm-db:
         condition: service_healthy
@@ -41,5 +45,4 @@ services:
 volumes:
   churchcrm_config:
   churchcrm_images:
-  churchcrm_backup:
   churchcrm_db:
