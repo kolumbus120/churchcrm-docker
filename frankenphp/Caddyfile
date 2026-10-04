@@ -1,0 +1,117 @@
+# ChurchCRM Caddyfile for FrankenPHP (EXPERIMENTAL, community-maintained)
+#
+# Based on the upstream example docker/examples/frankenphp/Caddyfile from
+# ChurchCRM/CRM. Caddy ignores .htaccess, so every Slim 4 sub-application must be
+# routed explicitly to its own index.php and every .htaccess deny rule must be
+# re-implemented here. Keep it in sync with upstream security advisories.
+
+{
+    frankenphp
+    order php_server before file_server
+    # TLS is terminated by the reverse proxy in front of the container
+    auto_https off
+    admin off
+}
+
+# Shared PHP handler. Behind a TLS-terminating proxy tell PHP the request is HTTPS
+# so ChurchCRM generates https:// URLs (equivalent of Apache's SetEnvIf X-Forwarded-Proto).
+(php) {
+    php_server {
+        env HTTPS {http.vars.fwd_https}
+    }
+}
+
+:8080 {
+    root * /var/www/html
+    encode zstd br gzip
+
+    @fwd_https header X-Forwarded-Proto https
+    vars @fwd_https fwd_https on
+
+    # ── Security: block sensitive paths (Apache gets these from .htaccess) ──
+    @dotfiles path_regexp hidden (^|/)\.
+    handle @dotfiles {
+        respond 404
+    }
+
+    @logs path /logs /logs/*
+    handle @logs {
+        respond 404
+    }
+
+    @tmp_attach path /tmp_attach /tmp_attach/*
+    handle @tmp_attach {
+        respond 404
+    }
+
+    # GHSA-mp2w-4q3r-ppx7: nothing under Include/ may be served directly
+    @include path_regexp include (?i)^/Include(/|$)
+    handle @include {
+        respond 404
+    }
+
+    # GHSA-37mf-vq43-5qp9: no direct execution of plugin PHP files
+    @pluginPhp path_regexp pluginphp ^/plugins/(community|core)/.+\.(php|phar|phtml|pht|php[3-9])$
+    handle @pluginPhp {
+        respond 404
+    }
+
+    # Uploaded images must not be executable (GHSA-v5mx-w5g6-fjpc)
+    @imagesPhp path_regexp imagesphp (?i)^/Images/.+\.(php|phar|phtml|pht|php[3-9])$
+    handle @imagesPhp {
+        respond 404
+    }
+
+    # ── Slim sub-application routing ─────────────────────────────────────────
+    handle /session/* {
+        try_files {path} /session/index.php
+        import php
+    }
+
+    handle /api/* {
+        try_files {path} /api/index.php
+        import php
+    }
+
+    handle /v2/* {
+        try_files {path} /v2/index.php
+        import php
+    }
+
+    handle /admin/* {
+        try_files {path} /admin/index.php
+        import php
+    }
+
+    handle /finance/* {
+        try_files {path} /finance/index.php
+        import php
+    }
+
+    handle /kiosk/* {
+        try_files {path} /kiosk/index.php
+        import php
+    }
+
+    handle /plugins/* {
+        try_files {path} /plugins/index.php
+        import php
+    }
+
+    handle /external/* {
+        try_files {path} /external/index.php
+        import php
+    }
+
+    handle /setup/* {
+        try_files {path} /setup/index.php
+        import php
+    }
+
+
+    # Legacy pages (PersonEditor.php, ...) and smart-URL router
+    handle {
+        try_files {path} {path}/ /index.php
+        import php
+    }
+}
