@@ -22,6 +22,7 @@ RUN curl -fL -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/dow
     && rm -rf /app/public/* /var/www/html \
     && mkdir -p /var/www/html \
     && cp -R /tmp/churchcrm/. /var/www/html/ \
+    && cp -a /var/www/html/Images /opt/churchcrm-Images.dist \
     && rm -rf /tmp/churchcrm /tmp/churchcrm.zip
 
 # Slovak (sk_SK) ships natively in the release zip since 7.4.0, no patching needed.
