@@ -2,12 +2,7 @@
 
 ---
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/kolumbus120/churchcrm.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
-[![Docker Stars](https://img.shields.io/docker/stars/kolumbus120/churchcrm.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
-[![Image Size](https://img.shields.io/docker/image-size/kolumbus120/churchcrm/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
-[![Latest Version](https://img.shields.io/docker/v/kolumbus120/churchcrm/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm)
-[![PHP Version](https://img.shields.io/badge/php-8.4-blue.svg)](https://www.php.net)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Docker Pulls](https://img.shields.io/docker/pulls/kolumbus120/churchcrm.svg)](https://hub.docker.com/r/kolumbus120/churchcrm) [![Docker Stars](https://img.shields.io/docker/stars/kolumbus120/churchcrm.svg)](https://hub.docker.com/r/kolumbus120/churchcrm) [![Image Size](https://img.shields.io/docker/image-size/kolumbus120/churchcrm/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm) [![Latest Version](https://img.shields.io/docker/v/kolumbus120/churchcrm/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm) [![PHP Version](https://img.shields.io/badge/php-8.4-blue.svg)](https://www.php.net) [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
@@ -149,7 +144,10 @@ If neither changed, nothing is pushed and the digest of `latest` stays the same,
 | MYSQL_DB_PASSWORD | - | Yes | Database password |
 | MYSQL_DB_PORT | 3306 | No | Database port |
 | MYSQL_ROOT_PASSWORD | - | Yes | MySQL root password |
-| CHURCHCRM_URL | - | No | Full URL of your instance, must end with `/` (e.g. `https://crm.example.com/`) |
+| CHURCHCRM_URL | - | Yes (first start) | Full URL of your instance, must end with `/` (e.g. `https://crm.example.com/`) |
+| CHURCHCRM_ROOT_PATH | - | No | Subdirectory install path, e.g. `/churchcrm` |
+| CRM_TRUSTED_PROXY | 172.16.0.0/12 | No | Reverse proxy IP/CIDR trusted for `X-Forwarded-For` (real client IP in logs) |
+| CRM_SERVER_NAME | localhost | No | Apache `ServerName` |
 
 ### Volumes
 
@@ -173,10 +171,15 @@ volumes:
 
 ## Security
 
-- Non-root user (www-data) for application
-- Proper file permissions (755 for directories, 644 for files)
-- PHP memory limits set to 512M
-- Upload limits set to 100M
+- Runs as non-root (`www-data`), still on port 80
+- No compiler or `-dev` packages in the final filesystem
+- `Config.php` is generated with proper escaping (passwords with quotes, backslashes or `$` are safe)
+- Fails fast with a clear message if `MYSQL_DB_PASSWORD` or `CHURCHCRM_URL` is empty
+- Real client IP in ChurchCRM audit logs behind a reverse proxy (`mod_remoteip`, trusted only from `CRM_TRUSTED_PROXY`, default `172.16.0.0/12`)
+- `X-Forwarded-Proto: https` is mapped to `HTTPS=on`
+- Built from the official release zip, base image pinned by digest
+
+Credit: escaping, fail-fast checks and trusted-proxy handling were inspired by [Dvalin21/churchcrm-docker](https://github.com/Dvalin21/churchcrm-docker) ([Docker Hub](https://hub.docker.com/r/dvalin21/churchcrm)).
 
 **For production, always:**
 - Use HTTPS with a reverse proxy

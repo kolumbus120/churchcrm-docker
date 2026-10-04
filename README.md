@@ -147,7 +147,12 @@ churchcrm-docker/
 | `MYSQL_DB_PASSWORD` | - | Database password (required) |
 | `MYSQL_DB_PORT` | `3306` | Database port |
 | `MYSQL_ROOT_PASSWORD` | - | MySQL root password (required) |
-| `CHURCHCRM_URL` | `` | Full URL of your ChurchCRM instance, must end with `/` (e.g. `https://crm.example.com/`) |
+| `CHURCHCRM_URL` | `` | **Required on first start.** Full URL of your ChurchCRM instance, must end with `/` (e.g. `https://crm.example.com/`) |
+| `CHURCHCRM_ROOT_PATH` | `` | Subdirectory install path, e.g. `/churchcrm` (empty for a root install) |
+| `CRM_TRUSTED_PROXY` | `172.16.0.0/12` | Reverse proxy IP/CIDR trusted for `X-Forwarded-For`, so audit logs show the real client IP |
+| `CRM_SERVER_NAME` | `localhost` | Apache `ServerName` (silences the AH00558 warning) |
+
+> **Security notes:** the container runs as non-root (`www-data`) and Apache still listens on port 80 (works because Docker defaults `net.ipv4.ip_unprivileged_port_start` to 0). Database passwords with quotes, backslashes or `$` are escaped correctly when `Config.php` is generated. If `MYSQL_DB_PASSWORD` or `CHURCHCRM_URL` is empty on first start the container exits with a clear error.
 
 ### Volumes (for persistent data)
 
@@ -222,6 +227,26 @@ services:
 ```
 
 Then enable it in your Dockerfile or entrypoint script.
+
+---
+
+## 🛡️ Security Hardening
+
+The image has the following built-in protections:
+
+| Protection | What it does |
+|---|---|
+| **Non-root** | The container runs as `www-data` (not root) and still listens on port 80. This works because Docker defaults `net.ipv4.ip_unprivileged_port_start` to 0 inside containers. |
+| **No build toolchain** | Compiler and `-dev` packages are purged after the PHP extensions are built, so the final filesystem carries no gcc/make/headers. (Layers below still contain them, so the image does not get smaller.) |
+| **Safe `Config.php` generation** | Database values are escaped with `var_export()`. A password containing quotes, backslashes or `$` cannot break the generated PHP file or inject code. |
+| **Fail fast** | If `MYSQL_DB_PASSWORD` or `CHURCHCRM_URL` is empty on first start, the container exits with a clear error instead of failing later with a confusing "Invalid URL" page. |
+| **Real client IP behind a proxy** | `mod_remoteip` takes the client IP from `X-Forwarded-For`, but only from proxies listed in `CRM_TRUSTED_PROXY`, so ChurchCRM audit logs record the member's IP and not the proxy's. A client cannot forge its IP by sending the header itself. |
+| **HTTPS behind a proxy** | `X-Forwarded-Proto: https` is mapped to `HTTPS=on`. |
+| **Verified release** | Built from the official ChurchCRM release zip, with the base image pinned by digest in CI. |
+
+`CRM_TRUSTED_PROXY` defaults to `172.16.0.0/12` (Docker's default networks). Set it to your reverse proxy's IP or CIDR if it lives elsewhere, otherwise the logs keep showing the proxy address.
+
+> **Credit:** several of these improvements (escaping the generated `Config.php`, failing fast on missing settings and trusting `X-Forwarded-For` only from known proxies) were inspired by [Dvalin21/churchcrm-docker](https://github.com/Dvalin21/churchcrm-docker) ([Docker Hub](https://hub.docker.com/r/dvalin21/churchcrm)), an independent community packaging of ChurchCRM. Thanks for the careful analysis. The non-root user and toolchain purge follow the approach in upstream ChurchCRM's own `docker/Dockerfile.churchcrm-apache-php8`.
 
 ---
 
@@ -310,6 +335,7 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 🙏 Acknowledgments
 
 - [ChurchCRM](https://churchcrm.io) - The original project
+- [Dvalin21/churchcrm-docker](https://github.com/Dvalin21/churchcrm-docker) ([Docker Hub](https://hub.docker.com/r/dvalin21/churchcrm)) - ideas for safer config generation, fail-fast checks and trusted-proxy handling
 - [Docker](https://docker.com) - Container platform
 - [GitHub](https://github.com) - Git service
 - [MariaDB](https://mariadb.org) - Database server
@@ -325,4 +351,4 @@ For support, please open an issue on [GitHub](https://github.com/kolumbus120/chu
 
 **Maintained by:** [kolumbus120](https://github.com/kolumbus120)
 
-*Last updated: 2026-09-25*
+*Last updated: 2026-10-04*
