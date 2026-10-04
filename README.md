@@ -250,6 +250,23 @@ The image has the following built-in protections:
 
 ---
 
+### ⚠️ Upgrading to the non-root image (7.7.1 and newer)
+
+Since the hardening release the container runs as `www-data` and Apache still listens on port 80. Please read this before pulling `:latest` on a production system:
+
+- **Pin a version tag** (e.g. `kolumbus120/churchcrm:7.7.1`) instead of `:latest`, and do not let Watchtower auto-update a production instance without testing first. The previous image stays available as `kolumbus120/churchcrm:7.7.0` if you need to roll back.
+- **Back up the database** (`mariadb-dump`) and the `config`, `images` and `backup` directories before upgrading.
+- **Port 80 without root** relies on Docker setting `net.ipv4.ip_unprivileged_port_start=0` inside containers (the default since Docker 20.10). On older Docker, some NAS systems, Kubernetes or Podman setups Apache may fail with `AH00072: make_sock: could not bind to address 0.0.0.0:80`. Fix it by adding the sysctl:
+  ```yaml
+  services:
+    churchcrm:
+      sysctls:
+        - net.ipv4.ip_unprivileged_port_start=0
+  ```
+  (or `docker run --sysctl net.ipv4.ip_unprivileged_port_start=0 ...`), or map a different host port to a container port you configure yourself.
+- **Bind-mounted directories** (`config`, `images`, `backup`) must be writable by UID/GID 33 (`www-data`). If uploads or backups fail after the upgrade, fix it on the host: `chown -R 33:33 /path/to/config /path/to/images /path/to/backup`.
+- **Language menu:** the Slovak entry now comes from the upstream release, so the menu shows "Slovak" instead of "Slovenčina - Slovak".
+
 ## 🛡️ Security Best Practices
 
 1. **Always use specific tags** in production (not `:latest`)
