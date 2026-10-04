@@ -230,6 +230,26 @@ Then enable it in your Dockerfile or entrypoint script.
 
 ---
 
+### 🧪 Pre-release: `7.7.1-rc2` (non-root, port 8080)
+
+`kolumbus120/churchcrm:7.7.1-rc2` is the hardened image with Apache listening on **8080** inside the container. It runs as non-root without any sysctl or capability, so it also works with `--cap-drop ALL`, `no-new-privileges`, Kubernetes and older Docker. This is the same approach as upstream ChurchCRM's own Dockerfile.
+
+**Breaking change compared with `:latest`:** map your host port to container port **8080** instead of 80.
+
+```yaml
+services:
+  churchcrm:
+    image: kolumbus120/churchcrm:7.7.1-rc2
+    ports:
+      - '8080:8080'   # host:container, was '8080:80'
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+```
+
+Pre-release tags are published only on request, never as `:latest`, `:7` or `:7.7.1`. Please report problems before this becomes the default.
+
 ## 🛡️ Security Hardening
 
 The image has the following built-in protections:
@@ -263,7 +283,7 @@ Since the hardening release the container runs as `www-data` and Apache still li
       sysctls:
         - net.ipv4.ip_unprivileged_port_start=0
   ```
-  (or `docker run --sysctl net.ipv4.ip_unprivileged_port_start=0 ...`), or map a different host port to a container port you configure yourself.
+  (or `docker run --sysctl net.ipv4.ip_unprivileged_port_start=0 ...`), or use the `7.7.1-rc2` variant above, which listens on 8080 and needs neither sysctl nor capabilities.
 - **Bind-mounted directories** (`config`, `images`, `backup`) must be writable by UID/GID 33 (`www-data`). If uploads or backups fail after the upgrade, fix it on the host: `chown -R 33:33 /path/to/config /path/to/images /path/to/backup`.
 - **Language menu:** the Slovak entry now comes from the upstream release, so the menu shows "Slovak" instead of "Slovenčina - Slovak".
 

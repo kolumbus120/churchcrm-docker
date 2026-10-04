@@ -169,10 +169,16 @@ volumes:
 
 ---
 
+## Pre-release `7.7.1-rc2` (non-root, port 8080)
+
+Hardened image with Apache on **8080** inside the container, no sysctl or capabilities needed (works with `--cap-drop ALL` and `no-new-privileges`). **Map your host port to container port 8080** instead of 80. It is never published as `latest`, `7` or `7.7.1`.
+
+---
+
 ## Upgrading to the non-root image (7.7.1+)
 
 - Pin a version tag (e.g. `7.7.1`) in production, avoid unattended auto-updates, back up the database and `config`/`images`/`backup` first. Roll back with `:7.7.0`.
-- Port 80 without root needs `net.ipv4.ip_unprivileged_port_start=0` (default in Docker 20.10+). On older Docker, Kubernetes or some NAS systems add `sysctls: [net.ipv4.ip_unprivileged_port_start=0]`.
+- Port 80 without root needs `net.ipv4.ip_unprivileged_port_start=0` (default in Docker 20.10+). On older Docker, Kubernetes or some NAS systems add `sysctls: [net.ipv4.ip_unprivileged_port_start=0]`, or use the `7.7.1-rc2` variant on port 8080 which needs nothing.
 - Bind-mounted `config`, `images` and `backup` directories must be writable by UID/GID 33 (`chown -R 33:33 ...`).
 
 ---

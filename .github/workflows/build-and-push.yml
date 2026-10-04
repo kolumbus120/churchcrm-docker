@@ -3,10 +3,9 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [main]
+    # Pushes only refresh the Docker Hub description. Image builds are scheduled or manual,
+    # so editing the Dockerfile or this workflow never silently republishes stable tags.
     paths:
-      - 'Dockerfile'
-      - 'entrypoint.sh'
-      - '.github/workflows/build-and-push.yml'
       - 'DOCKERHUB_OVERVIEW.md'
   schedule:
     - cron: '0 11 * * 2,5'  # Tuesday and Friday at 11:00 UTC
@@ -16,9 +15,18 @@ on:
         description: 'Force update :latest (use to promote a major version)'
         type: boolean
         default: false
+      tag_suffix:
+        description: 'Pre-release build, e.g. rc2. Publishes ONLY <version>-<suffix> (no latest/major/version tags)'
+        type: string
+        default: ''
+      listen_port:
+        description: 'Apache port inside the container for the pre-release build (8080 = portable non-root)'
+        type: string
+        default: '8080'
 
 jobs:
   build:
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -110,9 +118,26 @@ jobs:
         if: steps.check.outputs.should_build == 'true'
         uses: docker/setup-buildx-action@v3
 
+      - name: Build and push (pre-release tag only)
+        if: steps.check.outputs.should_build == 'true' && inputs.tag_suffix != ''
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          build-args: |
+            CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
+            BASE_IMAGE=php:8.4-apache@${{ steps.base.outputs.digest }}
+            BASE_DIGEST=${{ steps.base.outputs.digest }}
+            LISTEN_PORT=${{ inputs.listen_port }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          sbom: false
+          tags: |
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}-${{ inputs.tag_suffix }}
+
       - name: Build and push (normal update or force_latest)
         if: |
-          steps.check.outputs.should_build == 'true' &&
+          steps.check.outputs.should_build == 'true' && inputs.tag_suffix == '' &&
           (steps.check.outputs.major_jump != 'true' || inputs.force_latest == true)
         uses: docker/build-push-action@v5
         with:
@@ -132,7 +157,7 @@ jobs:
 
       - name: Build and push (major jump - :latest protected)
         if: |
-          steps.check.outputs.should_build == 'true' &&
+          steps.check.outputs.should_build == 'true' && inputs.tag_suffix == '' &&
           steps.check.outputs.major_jump == 'true' &&
           inputs.force_latest != true
         uses: docker/build-push-action@v5
@@ -152,7 +177,7 @@ jobs:
 
       - name: Create GitHub issue for major version jump
         if: |
-          steps.check.outputs.should_build == 'true' &&
+          steps.check.outputs.should_build == 'true' && inputs.tag_suffix == '' &&
           steps.check.outputs.major_jump == 'true' &&
           inputs.force_latest != true
         uses: actions/github-script@v7
