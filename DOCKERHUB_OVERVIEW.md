@@ -149,7 +149,7 @@ If neither changed, nothing is pushed and the digest of `latest` stays the same,
 | MYSQL_DB_PASSWORD | - | Yes | Database password |
 | MYSQL_DB_PORT | 3306 | No | Database port |
 | MYSQL_ROOT_PASSWORD | - | Yes | MySQL root password |
-| CHURCHCRM_URL | - | No | Full URL of your instance, must end with `/` (e.g. `https://crm.example.com/`) |
+| CHURCHCRM_URL | - | Yes (first start) | Full URL of your instance, must end with `/` (e.g. `https://crm.example.com/`) |
 
 ### Volumes
 

@@ -147,7 +147,12 @@ churchcrm-docker/
 | `MYSQL_DB_PASSWORD` | - | Database password (required) |
 | `MYSQL_DB_PORT` | `3306` | Database port |
 | `MYSQL_ROOT_PASSWORD` | - | MySQL root password (required) |
-| `CHURCHCRM_URL` | `` | Full URL of your ChurchCRM instance, must end with `/` (e.g. `https://crm.example.com/`) |
+| `CHURCHCRM_URL` | `` | **Required on first start.** Full URL of your ChurchCRM instance, must end with `/` (e.g. `https://crm.example.com/`) |
+| `CHURCHCRM_ROOT_PATH` | `` | Subdirectory install path, e.g. `/churchcrm` (empty for a root install) |
+| `CRM_TRUSTED_PROXY` | `172.16.0.0/12` | Reverse proxy IP/CIDR trusted for `X-Forwarded-For`, so audit logs show the real client IP |
+| `CRM_SERVER_NAME` | `localhost` | Apache `ServerName` (silences the AH00558 warning) |
+
+> **Security notes:** the container runs as non-root (`www-data`) and Apache still listens on port 80 (works because Docker defaults `net.ipv4.ip_unprivileged_port_start` to 0). Database passwords with quotes, backslashes or `$` are escaped correctly when `Config.php` is generated. If `MYSQL_DB_PASSWORD` or `CHURCHCRM_URL` is empty on first start the container exits with a clear error.
 
 ### Volumes (for persistent data)
 
