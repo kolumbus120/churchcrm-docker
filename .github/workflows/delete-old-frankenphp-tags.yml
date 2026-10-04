@@ -1,0 +1,23 @@
+name: One-off - delete old FrankenPHP tags
+
+on:
+  push:
+    branches: [feature/frankenphp]
+    paths: ['.github/workflows/delete-old-frankenphp-tags.yml']
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old tags from kolumbus120/churchcrm
+        run: |
+          TOKEN=$(curl -s -X POST "https://hub.docker.com/v2/users/login" \
+            -H "Content-Type: application/json" \
+            -d '{"username": "${{ secrets.DOCKER_HUB_USER }}", "password": "${{ secrets.DOCKER_HUB_TOKEN }}"}' \
+            | jq -r '.token')
+          for t in frankenphp frankenphp-7.7.1; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE \
+              -H "Authorization: Bearer $TOKEN" \
+              "https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_HUB_USER }}/churchcrm/tags/$t/")
+            echo "DELETE $t -> HTTP $code"
+          done

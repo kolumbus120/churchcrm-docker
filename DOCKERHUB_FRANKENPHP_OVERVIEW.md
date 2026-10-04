@@ -1,5 +1,7 @@
 # ChurchCRM on FrankenPHP (EXPERIMENTAL)
 
+[![Docker Pulls](https://img.shields.io/docker/pulls/kolumbus120/churchcrm-frankenphp.svg)](https://hub.docker.com/r/kolumbus120/churchcrm-frankenphp) [![Docker Stars](https://img.shields.io/docker/stars/kolumbus120/churchcrm-frankenphp.svg)](https://hub.docker.com/r/kolumbus120/churchcrm-frankenphp) [![Image Size](https://img.shields.io/docker/image-size/kolumbus120/churchcrm-frankenphp/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm-frankenphp) [![Latest Version](https://img.shields.io/docker/v/kolumbus120/churchcrm-frankenphp/latest.svg)](https://hub.docker.com/r/kolumbus120/churchcrm-frankenphp) [![PHP Version](https://img.shields.io/badge/php-8.4-blue.svg)](https://www.php.net) [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
 > ⚠️ **Experimental, community-maintained, not used in production.** It has only been
 > smoke-tested locally. For a stable setup use
 > [`kolumbus120/churchcrm`](https://hub.docker.com/r/kolumbus120/churchcrm) (Apache).
