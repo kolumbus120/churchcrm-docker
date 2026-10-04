@@ -169,6 +169,12 @@ volumes:
 
 ---
 
+## Pre-release `7.7.1-rc2` (non-root, port 8080)
+
+Hardened image with Apache on **8080** inside the container, no sysctl or capabilities needed (works with `--cap-drop ALL` and `no-new-privileges`). **Map your host port to container port 8080** instead of 80. It is never published as `latest`, `7` or `7.7.1`.
+
+---
+
 ## Security
 
 - Runs as non-root (`www-data`), still on port 80

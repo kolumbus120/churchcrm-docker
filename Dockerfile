@@ -75,18 +75,24 @@ RUN { \
     } > /usr/local/etc/php/conf.d/churchcrm-limits.ini
 
 WORKDIR /var/www/html
-EXPOSE 80
+# Port Apache listens on inside the container. 80 (default) relies on Docker's
+# net.ipv4.ip_unprivileged_port_start=0 for the non-root user. Build with
+# --build-arg LISTEN_PORT=8080 for the portable non-root variant (no sysctl needed).
+ARG LISTEN_PORT=80
+ENV LISTEN_PORT=${LISTEN_PORT}
+RUN sed -i "s/^Listen 80\$/Listen ${LISTEN_PORT}/" /etc/apache2/ports.conf \
+    && sed -i "s/<VirtualHost \*:80>/<VirtualHost *:${LISTEN_PORT}>/" /etc/apache2/sites-available/000-default.conf
+EXPOSE ${LISTEN_PORT}
 
 # Entrypoint: auto-generates Config.php from env vars if missing
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Run as non-root. Port 80 still works because Docker defaults
-# net.ipv4.ip_unprivileged_port_start to 0 inside containers.
+# Run as non-root.
 USER www-data
 
 # Healthcheck [SK: Kontrola zdravia kontajnera]
 HEALTHCHECK --interval=1m --timeout=3s --start-period=30s \
-  CMD curl -f http://localhost/ || exit 1
+  CMD curl -f http://localhost:${LISTEN_PORT}/ || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
