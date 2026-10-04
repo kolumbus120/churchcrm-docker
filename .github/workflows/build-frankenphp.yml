@@ -7,6 +7,7 @@ on:
       - 'Dockerfile.frankenphp'
       - 'entrypoint-frankenphp.sh'
       - 'frankenphp/**'
+      - 'DOCKERHUB_FRANKENPHP_OVERVIEW.md'
       - '.github/workflows/build-frankenphp.yml'
   workflow_dispatch:
 
@@ -39,6 +40,21 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
+      - name: Ensure Docker Hub repository exists
+        run: |
+          TOKEN=$(curl -s -X POST "https://hub.docker.com/v2/users/login" \
+            -H "Content-Type: application/json" \
+            -d '{"username": "${{ secrets.DOCKER_HUB_USER }}", "password": "${{ secrets.DOCKER_HUB_TOKEN }}"}' \
+            | jq -r '.token')
+          REPO="${{ secrets.DOCKER_HUB_USER }}/churchcrm-frankenphp"
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://hub.docker.com/v2/repositories/$REPO/")
+          if [ "$CODE" != "200" ]; then
+            echo "Creating $REPO"
+            curl -sf -X POST "https://hub.docker.com/v2/repositories/" \
+              -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+              -d "{\"namespace\": \"${{ secrets.DOCKER_HUB_USER }}\", \"name\": \"churchcrm-frankenphp\", \"is_private\": false, \"description\": \"EXPERIMENTAL community ChurchCRM image on FrankenPHP (unofficial)\"}"
+          fi
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -57,5 +73,23 @@ jobs:
           provenance: false
           sbom: false
           tags: |
-            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:frankenphp
-            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:frankenphp-${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm-frankenphp:latest
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm-frankenphp:${{ steps.version.outputs.version }}
+
+  update-dockerhub-description:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update DockerHub description
+        run: |
+          TOKEN=$(curl -s -X POST "https://hub.docker.com/v2/users/login" \
+            -H "Content-Type: application/json" \
+            -d '{"username": "${{ secrets.DOCKER_HUB_USER }}", "password": "${{ secrets.DOCKER_HUB_TOKEN }}"}' \
+            | jq -r '.token')
+          curl -sf -X PATCH "https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_HUB_USER }}/churchcrm-frankenphp/" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"full_description\": $(jq -Rs . < DOCKERHUB_FRANKENPHP_OVERVIEW.md)}"

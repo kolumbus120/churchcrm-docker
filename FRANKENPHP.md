@@ -1,11 +1,12 @@
 # ChurchCRM on FrankenPHP (EXPERIMENTAL)
 
-Community-maintained variant of the `kolumbus120/churchcrm` image that runs on
+Community-maintained variant of the `kolumbus120/churchcrm` image (published separately as `kolumbus120/churchcrm-frankenphp`) that runs on
 [FrankenPHP](https://frankenphp.dev) (Caddy + PHP 8.4 in a single binary) instead of
 Apache. **It has only been tested by the maintainer in a short local smoke test, not in
 production.** The stable image is `kolumbus120/churchcrm:latest` (Apache).
 
-Image: `kolumbus120/churchcrm:frankenphp` (amd64 only for now)
+Image: `kolumbus120/churchcrm-frankenphp` (tags `latest` and `<version>`, amd64 + arm64)  
+Docker Hub: https://hub.docker.com/r/kolumbus120/churchcrm-frankenphp
 
 ## Quick start
 

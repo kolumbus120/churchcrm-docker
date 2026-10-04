@@ -1,7 +1,7 @@
 # EXPERIMENTAL: FrankenPHP variant. Stable setup is docker-compose.yml (Apache).
 services:
   churchcrm:
-    image: kolumbus120/churchcrm:frankenphp
+    image: kolumbus120/churchcrm-frankenphp:latest
     container_name: churchcrm-app
     restart: unless-stopped
     ports:
