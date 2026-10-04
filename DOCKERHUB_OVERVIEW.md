@@ -38,7 +38,7 @@ docker run -d \
   --name churchcrm \
   -p 8080:80 \
   -v churchcrm_config:/var/www/html/config \
-  -v churchcrm_images:/var/www/html/images \
+  -v churchcrm_images:/var/www/html/Images \
   -v churchcrm_backup:/var/www/html/backup \
   -e MYSQL_DB_HOST=my-mariadb \
   -e MYSQL_DB_NAME=churchcrm \
@@ -63,7 +63,7 @@ services:
       - MYSQL_DB_PASSWORD=${MYSQL_PASSWORD}
     volumes:
       - churchcrm_config:/var/www/html/config
-      - churchcrm_images:/var/www/html/images
+      - churchcrm_images:/var/www/html/Images
       - churchcrm_backup:/var/www/html/backup
     depends_on:
       churchcrm-db:
@@ -154,7 +154,7 @@ If neither changed, nothing is pushed and the digest of `latest` stays the same,
 | Volume Mount | Description | Recommended |
 |--------------|-------------|-------------|
 | /var/www/html/config | ChurchCRM configuration | **Yes** |
-| /var/www/html/images | Uploaded member photos and images | **Yes** |
+| /var/www/html/Images | Uploaded member photos and images (**capital I**, a lowercase `images` mount does not persist them). Seeded with the default assets on first start | **Yes** |
 | /var/www/html/backup | ChurchCRM backups | Yes |
 | /var/lib/mysql | MariaDB database data | **Yes** |
 
@@ -162,7 +162,7 @@ Docker creates named volumes automatically on first start. Use bind mounts if yo
 ```yaml
 volumes:
   - /your/path/config:/var/www/html/config
-  - /your/path/images:/var/www/html/images
+  - /your/path/images:/var/www/html/Images
   - /your/path/backup:/var/www/html/backup
   - /your/path/db:/var/lib/mysql
 ```

@@ -43,6 +43,16 @@ if [ ! -f "$PERSISTENT_CONFIG" ]; then
     echo "[ChurchCRM] Config.php generated."
 fi
 
+# ChurchCRM stores photos in Images/ (capital I). When it is a fresh bind mount or volume it
+# hides the default assets (logos, login photo, Person/ and Family/), so seed it from the copy
+# kept in the image. Existing files are never overwritten (--skip-old-files).
+if [ -d /opt/churchcrm-Images.dist ]; then
+    mkdir -p /var/www/html/Images 2>/dev/null || true
+    (cd /opt/churchcrm-Images.dist && tar cf - .) \
+        | tar xf - --skip-old-files -C /var/www/html/Images 2>/dev/null \
+        || echo "[ChurchCRM] WARNING: could not populate /var/www/html/Images, check that it is writable by UID 33" >&2
+fi
+
 cp "$PERSISTENT_CONFIG" "$ACTIVE_CONFIG"
 chmod 640 "$ACTIVE_CONFIG"
 

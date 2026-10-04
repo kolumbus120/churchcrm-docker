@@ -45,6 +45,7 @@ RUN curl -L -o /tmp/churchcrm.zip https://github.com/ChurchCRM/CRM/releases/down
     && rm -rf /var/www/html/* \
     && cp -R /tmp/churchcrm/* /var/www/html/ \
     && rm -rf /tmp/churchcrm /tmp/churchcrm.zip \
+    && cp -a /var/www/html/Images /opt/churchcrm-Images.dist \
     && mkdir -p /var/www/html/config \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
