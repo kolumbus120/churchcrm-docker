@@ -20,7 +20,7 @@ on:
         type: string
         default: ''
       listen_port:
-        description: 'Apache port inside the container for the pre-release build (8080 = portable non-root)'
+        description: 'Apache port inside the container for the pre-release build (default 8080, same as the stable default)'
         type: string
         default: '8080'
 

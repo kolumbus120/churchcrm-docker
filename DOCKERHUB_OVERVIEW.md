@@ -6,6 +6,8 @@
 
 ---
 
+> **⚠️ Port change since 7.7.1:** the container listens on **8080** (not 80). Change your mapping from `host:80` to `host:8080`. See *Upgrading* below.
+
 ## Modern Docker image for ChurchCRM
 
 **The free, open-source church management system with automatic updates.**
@@ -36,7 +38,7 @@ This image provides a complete, production-ready ChurchCRM installation with all
 ```bash
 docker run -d \
   --name churchcrm \
-  -p 8080:80 \
+  -p 8080:8080 \
   -v churchcrm_config:/var/www/html/config \
   -v churchcrm_images:/var/www/html/Images \
   -v churchcrm_backup:/var/www/html/backup \
@@ -55,7 +57,7 @@ services:
     container_name: churchcrm-app
     restart: unless-stopped
     ports:
-      - '8080:80'
+      - '8080:8080'
     environment:
       - MYSQL_DB_HOST=churchcrm-db
       - MYSQL_DB_NAME=churchcrm
@@ -169,23 +171,22 @@ volumes:
 
 ---
 
-## Pre-release `7.7.1-rc2` (non-root, port 8080)
+## Upgrading to 7.7.1 and newer (port change)
 
-Hardened image with Apache on **8080** inside the container, no sysctl or capabilities needed (works with `--cap-drop ALL` and `no-new-privileges`). **Map your host port to container port 8080** instead of 80. It is never published as `latest`, `7` or `7.7.1`.
+**Important: the container now listens on 8080 instead of 80** and runs as non-root (`www-data`). If your compose file or `docker run` maps `host:80`, change it to `host:8080`, e.g. `-p 8080:8080` or `'8080:8080'`. The host port stays whatever you want; your reverse proxy keeps pointing at the same host port.
 
----
-
-## Upgrading to the non-root image (7.7.1+)
-
-- Pin a version tag (e.g. `7.7.1`) in production, avoid unattended auto-updates, back up the database and `config`/`images`/`backup` first. Roll back with `:7.7.0`.
-- Port 80 without root needs `net.ipv4.ip_unprivileged_port_start=0` (default in Docker 20.10+). On older Docker, Kubernetes or some NAS systems add `sysctls: [net.ipv4.ip_unprivileged_port_start=0]`, or use the `7.7.1-rc2` variant on port 8080 which needs nothing.
-- Bind-mounted `config`, `images` and `backup` directories must be writable by UID/GID 33 (`chown -R 33:33 ...`).
+- Pin a version tag (e.g. `7.7.1`) in production, avoid unattended auto-updates, back up the database and `config`/`Images`/`backup` first.
+- Roll back with `:7.7.0` (it listens on port 80, so switch the port back as well).
+- Bind-mounted `config`, `Images` and `backup` directories must be writable by UID/GID 33 (`chown -R 33:33 ...`).
+- Mount photos at `/var/www/html/Images` (**capital I**).
+- Works with `security_opt: [no-new-privileges:true]` and `cap_drop: [ALL]`; no sysctl needed.
+- Pre-release tags (e.g. `7.7.1-rc3`) are published only on request, never as `latest`, `7` or the plain version.
 
 ---
 
 ## Security
 
-- Runs as non-root (`www-data`), still on port 80
+- Runs as non-root (`www-data`) on the unprivileged port 8080, no capabilities or sysctl needed
 - No compiler or `-dev` packages in the final filesystem
 - `Config.php` is generated with proper escaping (passwords with quotes, backslashes or `$` are safe)
 - Fails fast with a clear message if `MYSQL_DB_PASSWORD` or `CHURCHCRM_URL` is empty

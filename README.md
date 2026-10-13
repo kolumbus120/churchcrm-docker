@@ -18,13 +18,18 @@ This Docker image provides a fully functional ChurchCRM installation with:
 
 ---
 
+> ### ⚠️ Port change: the container now listens on 8080 (not 80)
+> Since the hardened release (**7.7.1**) the image runs as non-root and Apache listens on **8080** inside the container. If your compose file or `docker run` maps `host:80`, change it to `host:8080`, for example `-p 8080:8080` or `'8080:8080'`. The host port stays whatever you want, only the container side changes. Pin a version tag instead of `:latest`, and back up first. See the *Upgrading* section below.
+
+---
+
 ## 🚀 Quick Start
 
 ### Using Docker Run
 ```bash
 docker run -d \
   --name churchcrm \
-  -p 8080:80 \
+  -p 8080:8080 \
   -e MYSQL_DB_HOST=mysql \
   -e MYSQL_DB_NAME=churchcrm \
   -e MYSQL_DB_USER=churchcrm \
@@ -152,7 +157,7 @@ churchcrm-docker/
 | `CRM_TRUSTED_PROXY` | `172.16.0.0/12` | Reverse proxy IP/CIDR trusted for `X-Forwarded-For`, so audit logs show the real client IP |
 | `CRM_SERVER_NAME` | `localhost` | Apache `ServerName` (silences the AH00558 warning) |
 
-> **Security notes:** the container runs as non-root (`www-data`) and Apache still listens on port 80 (works because Docker defaults `net.ipv4.ip_unprivileged_port_start` to 0). Database passwords with quotes, backslashes or `$` are escaped correctly when `Config.php` is generated. If `MYSQL_DB_PASSWORD` or `CHURCHCRM_URL` is empty on first start the container exits with a clear error.
+> **Security notes:** the container runs as non-root (`www-data`) and Apache listens on the unprivileged port 8080 (no capabilities or sysctl needed). Database passwords with quotes, backslashes or `$` are escaped correctly when `Config.php` is generated. If `MYSQL_DB_PASSWORD` or `CHURCHCRM_URL` is empty on first start the container exits with a clear error.
 
 ### Volumes (for persistent data)
 
@@ -234,33 +239,13 @@ Then enable it in your Dockerfile or entrypoint script.
 
 ---
 
-### 🧪 Pre-release: `7.7.1-rc2` (non-root, port 8080)
-
-`kolumbus120/churchcrm:7.7.1-rc2` is the hardened image with Apache listening on **8080** inside the container. It runs as non-root without any sysctl or capability, so it also works with `--cap-drop ALL`, `no-new-privileges`, Kubernetes and older Docker. This is the same approach as upstream ChurchCRM's own Dockerfile.
-
-**Breaking change compared with `:latest`:** map your host port to container port **8080** instead of 80.
-
-```yaml
-services:
-  churchcrm:
-    image: kolumbus120/churchcrm:7.7.1-rc2
-    ports:
-      - '8080:8080'   # host:container, was '8080:80'
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-```
-
-Pre-release tags are published only on request, never as `:latest`, `:7` or `:7.7.1`. Please report problems before this becomes the default.
-
 ## 🛡️ Security Hardening
 
 The image has the following built-in protections:
 
 | Protection | What it does |
 |---|---|
-| **Non-root** | The container runs as `www-data` (not root) and still listens on port 80. This works because Docker defaults `net.ipv4.ip_unprivileged_port_start` to 0 inside containers. |
+| **Non-root** | The container runs as `www-data` (not root) and listens on the unprivileged port **8080**, so it needs no capabilities or sysctl. It also runs with `--cap-drop ALL` and `no-new-privileges`. |
 | **No build toolchain** | Compiler and `-dev` packages are purged after the PHP extensions are built, so the final filesystem carries no gcc/make/headers. (Layers below still contain them, so the image does not get smaller.) |
 | **Safe `Config.php` generation** | Database values are escaped with `var_export()`. A password containing quotes, backslashes or `$` cannot break the generated PHP file or inject code. |
 | **Fail fast** | If `MYSQL_DB_PASSWORD` or `CHURCHCRM_URL` is empty on first start, the container exits with a clear error instead of failing later with a confusing "Invalid URL" page. |
@@ -276,20 +261,17 @@ The image has the following built-in protections:
 
 ### ⚠️ Upgrading to the non-root image (7.7.1 and newer)
 
-Since the hardening release the container runs as `www-data` and Apache still listens on port 80. Please read this before pulling `:latest` on a production system:
+Since the hardening release the container runs as `www-data` and Apache listens on **8080** inside the container. Please read this before pulling `:latest` on a production system:
 
-- **Pin a version tag** (e.g. `kolumbus120/churchcrm:7.7.1`) instead of `:latest`, and do not let Watchtower auto-update a production instance without testing first. The previous image stays available as `kolumbus120/churchcrm:7.7.0` if you need to roll back.
-- **Back up the database** (`mariadb-dump`) and the `config`, `images` and `backup` directories before upgrading.
-- **Port 80 without root** relies on Docker setting `net.ipv4.ip_unprivileged_port_start=0` inside containers (the default since Docker 20.10). On older Docker, some NAS systems, Kubernetes or Podman setups Apache may fail with `AH00072: make_sock: could not bind to address 0.0.0.0:80`. Fix it by adding the sysctl:
-  ```yaml
-  services:
-    churchcrm:
-      sysctls:
-        - net.ipv4.ip_unprivileged_port_start=0
-  ```
-  (or `docker run --sysctl net.ipv4.ip_unprivileged_port_start=0 ...`), or use the `7.7.1-rc2` variant above, which listens on 8080 and needs neither sysctl nor capabilities.
+- **Change the container port from 80 to 8080.** In compose: `ports: ['8080:8080']` (host:container). In `docker run`: `-p 8080:8080`. Your reverse proxy keeps pointing at the same host port, only the container side changes. If you forget, the site will not answer after the update.
+- **Pin a version tag** (e.g. `kolumbus120/churchcrm:7.7.1`) instead of `:latest`, and do not let Watchtower auto-update a production instance without testing first. The previous image stays available as `kolumbus120/churchcrm:7.7.0` (it listens on port 80) if you need to roll back; remember to switch the port back too.
+- **Back up the database** (`mariadb-dump`) and the `config`, `Images` and `backup` directories before upgrading.
 - **Bind-mounted directories** (`config`, `Images`, `backup`) must be writable by UID/GID 33 (`www-data`). If uploads fail after the upgrade, fix it on the host: `chown -R 33:33 /path/to/config /path/to/Images /path/to/backup`.
+- **Mount `Images` with a capital `I`** (`/var/www/html/Images`), see the note under *Volumes*.
+- **Hardening options:** the image works with `security_opt: [no-new-privileges:true]` and `cap_drop: [ALL]`; no sysctl or extra capability is needed.
 - **Language menu:** the Slovak entry now comes from the upstream release, so the menu shows "Slovak" instead of "Slovenčina - Slovak".
+
+Pre-release tags (for example `7.7.1-rc3`) are published only on request and never as `latest`, `7` or the plain version tag.
 
 ## 🛡️ Security Best Practices
 

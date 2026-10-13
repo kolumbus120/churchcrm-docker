@@ -76,10 +76,11 @@ RUN { \
     } > /usr/local/etc/php/conf.d/churchcrm-limits.ini
 
 WORKDIR /var/www/html
-# Port Apache listens on inside the container. 80 (default) relies on Docker's
-# net.ipv4.ip_unprivileged_port_start=0 for the non-root user. Build with
-# --build-arg LISTEN_PORT=8080 for the portable non-root variant (no sysctl needed).
-ARG LISTEN_PORT=80
+# Port Apache listens on inside the container. 8080 is an unprivileged port, so the
+# non-root user needs no capabilities or sysctl and the image also runs with
+# --cap-drop ALL, no-new-privileges, Kubernetes runAsNonRoot and older Docker.
+# (Up to and including 7.7.1-rc3 the default was 80.)
+ARG LISTEN_PORT=8080
 ENV LISTEN_PORT=${LISTEN_PORT}
 RUN sed -i "s/^Listen 80\$/Listen ${LISTEN_PORT}/" /etc/apache2/ports.conf \
     && sed -i "s/<VirtualHost \*:80>/<VirtualHost *:${LISTEN_PORT}>/" /etc/apache2/sites-available/000-default.conf
