@@ -6,6 +6,8 @@
 
 ---
 
+> **ℹ️ Official image available:** since 7.8.0 ChurchCRM publishes its own image, [`churchcrm/crm`](https://hub.docker.com/r/churchcrm/crm). Tags `<version>-official` here (e.g. `7.8.1-official`) are a thin wrapper over it that adds `Config.php` generation from environment variables, higher PHP upload limits and reverse-proxy support. See *Available Tags* and *Comparison* below.
+
 > **⚠️ Port change since 7.7.1:** the container listens on **8080** (not 80). Change your mapping from `host:80` to `host:8080`. See *Upgrading* below.
 
 ## Modern Docker image for ChurchCRM
@@ -106,6 +108,7 @@ Access ChurchCRM at: **http://localhost:8080**
 | `latest` | Latest stable version (auto-updates) | amd64, arm64 |
 | `7` | Latest 7.x version | amd64, arm64 |
 | `7.7.0` | Specific ChurchCRM version | amd64, arm64 |
+| `<version>-official` | Wrapper over the official `churchcrm/crm:<version>-php8-apache` image (e.g. `7.8.1-official`). Published manually, never moves `latest` | amd64, arm64 |
 
 ---
 
@@ -120,17 +123,22 @@ If neither changed, nothing is pushed and the digest of `latest` stays the same,
 
 ---
 
-## Comparison with Official ChurchCRM Docker Image
+## Comparison with the Official ChurchCRM Docker Image
 
-| Feature | churchcrm/crm | kolumbus120/churchcrm |
+Since ChurchCRM 7.8.0 there is an official image, [`churchcrm/crm`](https://hub.docker.com/r/churchcrm/crm) (`<version>-php8-apache`). It is also non-root, listens on 8080 and has the release code baked in.
+
+| Feature | `churchcrm/crm` (official) | `kolumbus120/churchcrm` (this repo) |
 |---------|---------------|------------------|
-| PHP Version | 5.6 (EOL) | **8.4** (Latest) |
-| Auto-updates | No | **Yes** (Twice weekly) |
-| Security Patches | No | **Yes** |
-| Multi-arch | No | **Yes** (amd64, arm64) |
-| All PHP Extensions | Missing some | **All required** |
-| Last Update | 2020 | **Twice weekly** |
-| Maintenance | Abandoned | **Active** |
+| Base | PHP 8.4, Apache, multi-stage, digest-pinned | PHP 8.4, Apache; `<version>-official` tags are built on the official image |
+| User / port | `www-data`, 8080 | `www-data`, 8080 |
+| `Config.php` | Setup wizard, then bind-mount the file to keep it | **Generated from environment variables** (wizard still available when no password is set) |
+| `upload_max_filesize` | 2M | **100M** (memory 512M, timezone Europe/Bratislava) |
+| `Images/` as a volume | Mount only `Images/Person` and `Images/Family` | **Whole `Images/` can be a volume**, defaults are seeded on start |
+| Reverse proxy | None | `X-Forwarded-Proto` and `mod_remoteip` |
+| Healthcheck | Defined in compose only | Built into the image |
+| Releases | Each ChurchCRM release | Same; plain tags (`latest`, `7`, `7.x.y`) are built separately from the release zip, `-official` tags on demand |
+
+If you do not need the extras above, the official image is a fine choice. Back up the database before switching between images; the database schema is upgraded automatically on first start.
 
 ---
 
