@@ -19,10 +19,6 @@ on:
         description: 'Pre-release build, e.g. rc2. Publishes ONLY <version>-<suffix> (no latest/major/version tags)'
         type: string
         default: ''
-      listen_port:
-        description: 'Apache port inside the container for the pre-release build (default 8080, same as the stable default)'
-        type: string
-        default: '8080'
 
 jobs:
   build:
@@ -61,18 +57,22 @@ jobs:
       - name: Resolve base image digest
         id: base
         run: |
+          VERSION="${{ steps.version.outputs.version }}"
           IMAGE="${{ secrets.DOCKER_HUB_USER }}/churchcrm:latest"
-          CURRENT=$(docker buildx imagetools inspect php:8.4-apache --format '{{.Manifest.Digest}}')
+          # The official image for a new release can appear a little after the GitHub release.
+          CURRENT=$(docker buildx imagetools inspect "churchcrm/crm:${VERSION}-php8-apache" --format '{{.Manifest.Digest}}' 2>/dev/null || true)
           if [ -z "$CURRENT" ]; then
-            echo "::error::Could not resolve the php:8.4-apache digest"
-            exit 1
+            echo "::warning::churchcrm/crm:${VERSION}-php8-apache is not published yet - skipping"
+            echo "available=false" >> $GITHUB_OUTPUT
+            exit 0
           fi
+          echo "available=true" >> $GITHUB_OUTPUT
           # Empty when :latest predates this label - treated as "needs rebuild".
           BUILT=$(docker buildx imagetools inspect "$IMAGE" \
             --format '{{index (index .Image "linux/amd64").Config.Labels "org.opencontainers.image.base.digest"}}' 2>/dev/null || true)
           echo "digest=$CURRENT" >> $GITHUB_OUTPUT
-          echo "Base image now:   $CURRENT"
-          echo "Base image built: ${BUILT:-<none recorded>}"
+          echo "Official image now:   $CURRENT"
+          echo "Official image built: ${BUILT:-<none recorded>}"
           if [ "$CURRENT" = "$BUILT" ]; then
             echo "patched=false" >> $GITHUB_OUTPUT
           else
@@ -87,17 +87,22 @@ jobs:
           PREV="${{ steps.version.outputs.prev_major }}"
           HUB="https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_HUB_USER }}/churchcrm/tags"
 
-          # On the schedule we build for a new ChurchCRM release or a patched
-          # base image. Push and manual runs always build.
+          if [ "${{ steps.base.outputs.available }}" != "true" ]; then
+            echo "should_build=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # On the schedule we build for a new ChurchCRM release or a changed official
+          # image (security rebuild upstream). Push and manual runs always build.
           if [ "${{ github.event_name }}" = "schedule" ]; then
             V_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$HUB/$VERSION/")
             if [ "$V_HTTP" != "200" ]; then
               echo "Version $VERSION not on Docker Hub - building"
             elif [ "${{ steps.base.outputs.patched }}" = "true" ]; then
-              echo "php:8.4-apache changed - rebuilding $VERSION for security patches"
+              echo "official image changed - rebuilding $VERSION"
             else
               echo "should_build=false" >> $GITHUB_OUTPUT
-              echo "Version $VERSION already on Docker Hub and base image unchanged - nothing to do"
+              echo "Version $VERSION already on Docker Hub and official image unchanged - nothing to do"
               exit 0
             fi
           fi
@@ -118,16 +123,45 @@ jobs:
         if: steps.check.outputs.should_build == 'true'
         uses: docker/setup-buildx-action@v3
 
+      - name: Build for smoke test
+        if: steps.check.outputs.should_build == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.upstream
+          build-args: |
+            CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
+            BASE_IMAGE=churchcrm/crm:${{ steps.version.outputs.version }}-php8-apache@${{ steps.base.outputs.digest }}
+            BASE_DIGEST=${{ steps.base.outputs.digest }}
+          load: true
+          tags: churchcrm-wrapper:test
+
+      - name: Smoke test
+        if: steps.check.outputs.should_build == 'true'
+        run: |
+          docker run -d --name crm-smoke --cap-drop ALL --security-opt no-new-privileges \
+            -p 127.0.0.1:8080:8080 churchcrm-wrapper:test
+          for i in $(seq 1 30); do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/ || true)
+            [ "$CODE" = "302" ] && break
+            sleep 2
+          done
+          echo "GET / -> $CODE"
+          [ "$CODE" = "302" ] || { docker logs crm-smoke; exit 1; }
+          [ "$(docker exec crm-smoke id -u)" = "33" ]
+          [ "$(docker exec crm-smoke php -r 'echo ini_get("upload_max_filesize");')" = "100M" ]
+          docker rm -f crm-smoke
+
       - name: Build and push (pre-release tag only)
         if: steps.check.outputs.should_build == 'true' && inputs.tag_suffix != ''
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Dockerfile.upstream
           build-args: |
             CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
-            BASE_IMAGE=php:8.4-apache@${{ steps.base.outputs.digest }}
+            BASE_IMAGE=churchcrm/crm:${{ steps.version.outputs.version }}-php8-apache@${{ steps.base.outputs.digest }}
             BASE_DIGEST=${{ steps.base.outputs.digest }}
-            LISTEN_PORT=${{ inputs.listen_port }}
           platforms: linux/amd64,linux/arm64
           push: true
           provenance: false
@@ -142,9 +176,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Dockerfile.upstream
           build-args: |
             CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
-            BASE_IMAGE=php:8.4-apache@${{ steps.base.outputs.digest }}
+            BASE_IMAGE=churchcrm/crm:${{ steps.version.outputs.version }}-php8-apache@${{ steps.base.outputs.digest }}
             BASE_DIGEST=${{ steps.base.outputs.digest }}
           platforms: linux/amd64,linux/arm64
           push: true
@@ -154,6 +189,7 @@ jobs:
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:latest
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.major }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}-official
 
       - name: Build and push (major jump - :latest protected)
         if: |
@@ -163,9 +199,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Dockerfile.upstream
           build-args: |
             CHURCHCRM_VERSION=${{ steps.version.outputs.version }}
-            BASE_IMAGE=php:8.4-apache@${{ steps.base.outputs.digest }}
+            BASE_IMAGE=churchcrm/crm:${{ steps.version.outputs.version }}-php8-apache@${{ steps.base.outputs.digest }}
             BASE_DIGEST=${{ steps.base.outputs.digest }}
           platforms: linux/amd64,linux/arm64
           push: true
@@ -174,6 +211,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.major }}
             ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKER_HUB_USER }}/churchcrm:${{ steps.version.outputs.version }}-official
 
       - name: Create GitHub issue for major version jump
         if: |
