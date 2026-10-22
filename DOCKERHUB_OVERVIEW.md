@@ -6,15 +6,27 @@
 
 ---
 
-> **ℹ️ Official image available:** since 7.8.0 ChurchCRM publishes its own image, [`churchcrm/crm`](https://hub.docker.com/r/churchcrm/crm). Tags `<version>-official` here (e.g. `7.8.1-official`) are a thin wrapper over it that adds `Config.php` generation from environment variables, higher PHP upload limits and reverse-proxy support. See *Available Tags* and *Comparison* below.
-
 > **⚠️ Port change since 7.7.1:** the container listens on **8080** (not 80). Change your mapping from `host:80` to `host:8080`. See *Upgrading* below.
 
-## Modern Docker image for ChurchCRM
+## ChurchCRM Docker image with environment-based configuration
 
-**The free, open-source church management system with automatic updates.**
+**Community image for [ChurchCRM](https://github.com/ChurchCRM/CRM), the free, open-source church management system.** Not affiliated with the ChurchCRM project.
 
-This image provides a complete, production-ready ChurchCRM installation with all required dependencies pre-installed and configured.
+### Relationship to the official image
+
+Since ChurchCRM 7.8.0 the project publishes its own image, [`churchcrm/crm`](https://hub.docker.com/r/churchcrm/crm). **The `<version>-official` tags here (e.g. `7.8.1-official`) are that official image plus a thin layer** ([source](https://github.com/kolumbus120/churchcrm-docker/blob/main/Dockerfile.upstream)). The ChurchCRM code, PHP build and Apache setup are unchanged and come from upstream. The layer adds only:
+
+| Added on top of `churchcrm/crm` | Why |
+|---|---|
+| `Config.php` generated from environment variables (`MYSQL_DB_*`, `CHURCHCRM_URL`) | no setup wizard and no bind-mounted config file; without `MYSQL_DB_PASSWORD` it behaves like upstream and shows the wizard |
+| `upload_max_filesize` / `post_max_size` 100M, `memory_limit` 512M, `max_execution_time` 300, timezone Europe/Bratislava | upstream ships 2M upload, 256M memory, UTC |
+| Whole `Images/` can be a volume (defaults are copied in on start) | upstream asks you to mount only `Images/Person` and `Images/Family` |
+| `X-Forwarded-Proto` → HTTPS and `mod_remoteip` (real client IP from `X-Forwarded-For`, trusted proxies via `CRM_TRUSTED_PROXY`) | running behind a reverse proxy |
+| Healthcheck inside the image | upstream defines it only in its compose file |
+
+If you do not need any of that, use `churchcrm/crm` directly.
+
+The older plain tags (`latest`, `7`, `7.x.y`) are a separate, self-built image of the same ChurchCRM release (PHP 8.4 + Apache, built from the release zip). It has the same additions as above (they were the reason for this image before an official one existed), but it is built by us from the release zip rather than on top of the official image. New deployments should prefer `-official`.
 
 ---
 
@@ -108,7 +120,7 @@ Access ChurchCRM at: **http://localhost:8080**
 | `latest` | Latest stable version (auto-updates) | amd64, arm64 |
 | `7` | Latest 7.x version | amd64, arm64 |
 | `7.7.0` | Specific ChurchCRM version | amd64, arm64 |
-| `<version>-official` | Wrapper over the official `churchcrm/crm:<version>-php8-apache` image (e.g. `7.8.1-official`). Published manually, never moves `latest` | amd64, arm64 |
+| `<version>-official` | **Recommended.** Official `churchcrm/crm:<version>-php8-apache` + thin layer (see above), e.g. `7.8.1-official`. Published manually, never moves `latest` | amd64, arm64 |
 
 ---
 
