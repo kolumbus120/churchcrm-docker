@@ -1,0 +1,48 @@
+# SKETCH: thin wrapper over the official ChurchCRM image (churchcrm/crm).
+# Upstream already provides: non-root www-data, Apache on 8080, release code baked in,
+# multi-stage build with no compilers. This layer only adds what upstream does not:
+#   - PHP limits (upstream upload_max_filesize is 2M)
+#   - Config.php generated from environment variables (no setup wizard needed)
+#   - seeding of Images/ so the whole directory can be a volume/bind mount
+#   - reverse proxy: X-Forwarded-Proto -> HTTPS, mod_remoteip for the real client IP
+#
+# Build: docker build -f Dockerfile.upstream --build-arg CHURCHCRM_VERSION=7.8.1 -t churchcrm-wrapper .
+ARG CHURCHCRM_VERSION=7.8.1
+FROM churchcrm/crm:${CHURCHCRM_VERSION}-php8-apache
+
+USER root
+
+ENV CRM_TRUSTED_PROXY=172.16.0.0/12 \
+    CRM_SERVER_NAME=localhost
+
+RUN a2enmod remoteip \
+    && echo 'SetEnvIf X-Forwarded-Proto "https" HTTPS=on' \
+       > /etc/apache2/conf-available/reverse-proxy.conf \
+    && printf 'RemoteIPHeader X-Forwarded-For\nRemoteIPTrustedProxy ${CRM_TRUSTED_PROXY}\nServerName ${CRM_SERVER_NAME}\n' \
+       > /etc/apache2/conf-available/remoteip-proxy.conf \
+    && a2enconf reverse-proxy remoteip-proxy \
+    && chown -R www-data:www-data /var/run/apache2 /var/lock/apache2 /var/log/apache2
+
+RUN { \
+    echo 'memory_limit=512M'; \
+    echo 'upload_max_filesize=100M'; \
+    echo 'post_max_size=100M'; \
+    echo 'max_execution_time=300'; \
+    echo 'date.timezone=Europe/Bratislava'; \
+    } > /usr/local/etc/php/conf.d/zz-churchcrm-limits.ini
+
+# Copy of the shipped Images/ (logos, login photo, empty Person/ and Family/) used for seeding.
+RUN cp -a /var/www/html/Images /opt/churchcrm-Images.dist \
+    && mkdir -p /var/www/html/config \
+    && chown www-data:www-data /var/www/html/config
+
+COPY entrypoint-upstream.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+USER www-data
+
+HEALTHCHECK --interval=1m --timeout=3s --start-period=30s \
+  CMD curl -fsS -o /dev/null http://127.0.0.1:8080/ || exit 1
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["apache2-foreground"]
