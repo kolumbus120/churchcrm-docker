@@ -8,7 +8,14 @@
 #
 # Build: docker build -f Dockerfile.upstream --build-arg CHURCHCRM_VERSION=7.8.1 -t churchcrm-wrapper .
 ARG CHURCHCRM_VERSION=7.8.1
-FROM churchcrm/crm:${CHURCHCRM_VERSION}-php8-apache
+# CI passes the official image pinned by digest, so the label below matches what was built.
+ARG BASE_IMAGE=churchcrm/crm:${CHURCHCRM_VERSION}-php8-apache
+FROM ${BASE_IMAGE}
+
+ARG CHURCHCRM_VERSION
+ARG BASE_DIGEST=unknown
+LABEL org.opencontainers.image.base.name="churchcrm/crm:${CHURCHCRM_VERSION}-php8-apache" \
+      org.opencontainers.image.base.digest="${BASE_DIGEST}"
 
 USER root
 
