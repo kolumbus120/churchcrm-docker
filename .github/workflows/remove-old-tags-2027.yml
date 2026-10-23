@@ -17,6 +17,10 @@ on:
         description: 'Only list what would be deleted'
         type: boolean
         default: true
+      test_delete:
+        description: 'Only test the Docker Hub Delete permission: create the throwaway tag delete-test and delete it again (touches nothing else)'
+        type: boolean
+        default: false
 
 permissions:
   actions: write
@@ -29,9 +33,36 @@ jobs:
       REPO: kolumbus120/churchcrm
       TAGS: '7.3.1 7.3.3 7.4.0 7.4.1 7.4.2 7.4.3 7.5.0 7.5.1 7.7.1-rc2 7.7.1-rc3'
     steps:
+      - name: Test the Delete permission (creates and deletes the tag delete-test)
+        if: github.event_name == 'workflow_dispatch' && inputs.test_delete
+        env:
+          HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
+          HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+        run: |
+          echo "$HUB_TOKEN" | docker login -u "$HUB_USER" --password-stdin
+          docker buildx imagetools create -t "$REPO:delete-test" "$REPO:7.8.1-official"
+          JWT=$(curl -s -X POST https://hub.docker.com/v2/users/login \
+            -H 'Content-Type: application/json' \
+            -d "{\"username\": \"$HUB_USER\", \"password\": \"$HUB_TOKEN\"}" | jq -r '.token')
+          [ -n "$JWT" ] && [ "$JWT" != "null" ] || { echo "::error::Docker Hub login failed"; exit 1; }
+          DEL=$(curl -s -o /dev/stderr -w '%{http_code}' -X DELETE \
+            -H "Authorization: Bearer $JWT" "https://hub.docker.com/v2/repositories/$REPO/tags/delete-test/")
+          echo "DELETE delete-test -> $DEL"
+          if [ "$DEL" = "204" ]; then
+            echo "Delete permission OK"
+          else
+            echo "::error::DELETE failed with $DEL - the token has no Delete permission. The tag $REPO:delete-test was left behind, remove it by hand."
+            exit 1
+          fi
+
       - name: Guard (run only on or after 2027-01-01)
         id: guard
         run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.test_delete }}" = "true" ]; then
+            echo "Test mode - skipping the real run"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%Y%m%d)" -lt 20270101 ]; then
             echo "Before 2027-01-01 - nothing to do (cron fires every year)"
             echo "run=false" >> "$GITHUB_OUTPUT"
