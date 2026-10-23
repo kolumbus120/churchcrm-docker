@@ -119,6 +119,22 @@ Access ChurchCRM at: **http://localhost:8080**
 |-----|-------------|--------------|
 | `latest` | Latest stable version (auto-updates) | amd64, arm64 |
 | `7` | Latest 7.x version | amd64, arm64 |
+| `7.8.1` | Specific ChurchCRM version | amd64, arm64 |
+| `7.8.1-official` | Same image as `7.8.1`: the official `churchcrm/crm:7.8.1-php8-apache` + thin layer (see above). Published together with every plain version tag | amd64, arm64 |
+
+Since 7.8.1 the plain tags (`latest`, `7`, `7.x.y`) are built on the official image as well. Earlier versions were built from the release zip.
+
+### Old tags will be removed
+
+**Tags older than 7.6.0 (`7.3.1` to `7.5.1`) will be deleted from Docker Hub on 1 January 2027.** Releases move quickly and almost everyone should be on a recent version; running the latest one gives you the security fixes. Tags from `7.6.0` onwards stay for now.
+
+- If you pin one of the old tags, change it to a current one (`7.8.1`, or `latest` / `7`) before that date. After removal `docker pull` of the old tag fails.
+- You can jump over several versions: the database schema is upgraded automatically on first start (checked going from 7.7.1 to 7.8.1). **Back up the database and the `config`, `Images` and `backup` volumes first**, and read the ChurchCRM release notes if you skip many versions.
+- Pre-release tags such as `7.7.1-rc2` and `7.7.1-rc3` are test builds and will be removed earlier, without notice.
+
+-----|-------------|--------------|
+| `latest` | Latest stable version (auto-updates) | amd64, arm64 |
+| `7` | Latest 7.x version | amd64, arm64 |
 | `7.7.0` | Specific ChurchCRM version | amd64, arm64 |
 | `<version>-official` | **Recommended.** Official `churchcrm/crm:<version>-php8-apache` + thin layer (see above), e.g. `7.8.1-official`. Published manually, never moves `latest` | amd64, arm64 |
 
