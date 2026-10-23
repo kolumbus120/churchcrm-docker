@@ -129,7 +129,8 @@ Since 7.8.1 the plain tags (`latest`, `7`, `7.x.y`) are built on the official im
 **Tags older than 7.6.0 (`7.3.1` to `7.5.1`) will be deleted from Docker Hub on 1 January 2027.** Releases move quickly and almost everyone should be on a recent version; running the latest one gives you the security fixes. Tags from `7.6.0` onwards stay for now.
 
 - If you pin one of the old tags, change it to a current one (`7.8.1`, or `latest` / `7`) before that date. After removal `docker pull` of the old tag fails.
-- You can jump over several versions: the database schema is upgraded automatically on first start (checked going from 7.7.1 to 7.8.1). **Back up the database and the `config`, `Images` and `backup` volumes first**, and read the ChurchCRM release notes if you skip many versions.
+- You can jump over several versions: the database schema is upgraded automatically on first start. Tested going directly from 7.3.3 to 7.8.1 (all intermediate steps ran in one start; data and the default admin login were kept), but only on a small database without photos or finance data. **Back up the database and the `config`, `Images` and `backup` volumes first**, and read the ChurchCRM release notes if you skip many versions.
+- If you keep an old `config` volume, check `Config.php` in it: images up to about 7.3 wrote an empty `$URL[0] = '';`, which makes the new version fail with "Invalid URL". Set it to your public address, e.g. `$URL[0] = 'https://crm.example.com/';`.
 - Pre-release tags such as `7.7.1-rc2` and `7.7.1-rc3` are test builds and will be removed earlier, without notice.
 
 -----|-------------|--------------|
