@@ -62,6 +62,23 @@
         respond 404
     }
 
+    # Deny CLI scripts and internal PHP templates/route definitions directly (they must only
+    # run through their application's index.php). Mirrors upstream ChurchCRM PR #10759.
+    @cli path /cli /cli/*
+    handle @cli {
+        respond 404
+    }
+
+    @internalPhp path_regexp internalphp ^/(v2/templates|admin/views|finance/views|people/views|groups/views|event/views|fundraiser/views|ministries/views)/.*\.php(/|$)
+    handle @internalPhp {
+        respond 404
+    }
+
+    @portalRoutes path_regexp portalroutes ^/portal/routes/.*\.php$
+    handle @portalRoutes {
+        respond 404
+    }
+
     # ── Slim sub-application routing ─────────────────────────────────────────
     handle /session/* {
         try_files {path} /session/index.php
@@ -105,6 +122,37 @@
 
     handle /setup/* {
         try_files {path} /setup/index.php
+        import php
+    }
+
+    # Member portal, directory, groups, events, ministries, fundraisers (new in 7.8.0)
+    handle /portal/* {
+        try_files {path} /portal/index.php
+        import php
+    }
+
+    handle /people/* {
+        try_files {path} /people/index.php
+        import php
+    }
+
+    handle /groups/* {
+        try_files {path} /groups/index.php
+        import php
+    }
+
+    handle /event/* {
+        try_files {path} /event/index.php
+        import php
+    }
+
+    handle /ministries/* {
+        try_files {path} /ministries/index.php
+        import php
+    }
+
+    handle /fundraiser/* {
+        try_files {path} /fundraiser/index.php
         import php
     }
 
