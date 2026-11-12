@@ -19,7 +19,7 @@ Since ChurchCRM 7.8.0 the project publishes its own image, [`churchcrm/crm`](htt
 | Added on top of `churchcrm/crm` | Why |
 |---|---|
 | `Config.php` generated from environment variables (`MYSQL_DB_*`, `CHURCHCRM_URL`) | no setup wizard and no bind-mounted config file; without `MYSQL_DB_PASSWORD` it behaves like upstream and shows the wizard |
-| `upload_max_filesize` / `post_max_size` 100M, `memory_limit` 512M, `max_execution_time` 300, timezone Europe/Bratislava | upstream ships 2M upload, 256M memory, UTC |
+| `upload_max_filesize` 100M, `post_max_size` 2G (as upstream), `memory_limit` 512M, `max_execution_time` 300, timezone Europe/Bratislava | upstream ships 2M upload, 256M memory, UTC |
 | Whole `Images/` can be a volume (defaults are copied in on start) | upstream asks you to mount only `Images/Person` and `Images/Family` |
 | `X-Forwarded-Proto` → HTTPS and `mod_remoteip` (real client IP from `X-Forwarded-For`, trusted proxies via `CRM_TRUSTED_PROXY`) | running behind a reverse proxy |
 | Healthcheck inside the image | upstream defines it only in its compose file |

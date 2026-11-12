@@ -33,7 +33,7 @@ RUN a2enmod remoteip \
 RUN { \
     echo 'memory_limit=512M'; \
     echo 'upload_max_filesize=100M'; \
-    echo 'post_max_size=100M'; \
+    echo 'post_max_size=2G'; \
     echo 'max_execution_time=300'; \
     echo 'date.timezone=Europe/Bratislava'; \
     } > /usr/local/etc/php/conf.d/zz-churchcrm-limits.ini
