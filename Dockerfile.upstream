@@ -6,8 +6,8 @@
 #   - seeding of Images/ so the whole directory can be a volume/bind mount
 #   - reverse proxy: X-Forwarded-Proto -> HTTPS, mod_remoteip for the real client IP
 #
-# Build: docker build -f Dockerfile.upstream --build-arg CHURCHCRM_VERSION=7.8.1 -t churchcrm-wrapper .
-ARG CHURCHCRM_VERSION=7.8.1
+# Build: docker build -f Dockerfile.upstream --build-arg CHURCHCRM_VERSION=7.8.5 -t churchcrm-wrapper .
+ARG CHURCHCRM_VERSION=7.8.5
 # CI passes the official image pinned by digest, so the label below matches what was built.
 ARG BASE_IMAGE=churchcrm/crm:${CHURCHCRM_VERSION}-php8-apache
 FROM ${BASE_IMAGE}

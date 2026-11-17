@@ -14,7 +14,7 @@
 
 ### Relationship to the official image
 
-Since ChurchCRM 7.8.0 the project publishes its own image, [`churchcrm/crm`](https://hub.docker.com/r/churchcrm/crm). **The `<version>-official` tags here (e.g. `7.8.1-official`) are that official image plus a thin layer** ([source](https://github.com/kolumbus120/churchcrm-docker/blob/main/Dockerfile.upstream)). The ChurchCRM code, PHP build and Apache setup are unchanged and come from upstream. The layer adds only:
+Since ChurchCRM 7.8.0 the project publishes its own image, [`churchcrm/crm`](https://hub.docker.com/r/churchcrm/crm). **The `<version>-official` tags here (e.g. `7.8.5-official`) are that official image plus a thin layer** ([source](https://github.com/kolumbus120/churchcrm-docker/blob/main/Dockerfile.upstream)). The ChurchCRM code, PHP build and Apache setup are unchanged and come from upstream. The layer adds only:
 
 | Added on top of `churchcrm/crm` | Why |
 |---|---|
@@ -119,8 +119,8 @@ Access ChurchCRM at: **http://localhost:8080**
 |-----|-------------|--------------|
 | `latest` | Latest stable version (auto-updates) | amd64, arm64 |
 | `7` | Latest 7.x version | amd64, arm64 |
-| `7.8.1` | Specific ChurchCRM version | amd64, arm64 |
-| `7.8.1-official` | Same image as `7.8.1`: the official `churchcrm/crm:7.8.1-php8-apache` + thin layer (see above). Published together with every plain version tag | amd64, arm64 |
+| `7.8.5` | Specific ChurchCRM version | amd64, arm64 |
+| `7.8.5-official` | Same image as `7.8.5`: the official `churchcrm/crm:7.8.5-php8-apache` + thin layer (see above). Published together with every plain version tag | amd64, arm64 |
 
 Since 7.8.1 the plain tags (`latest`, `7`, `7.x.y`) are built on the official image as well. Earlier versions were built from the release zip.
 
@@ -128,7 +128,7 @@ Since 7.8.1 the plain tags (`latest`, `7`, `7.x.y`) are built on the official im
 
 **Tags older than 7.6.0 (`7.3.1` to `7.5.1`) will be deleted from Docker Hub on 1 January 2027.** Releases move quickly and almost everyone should be on a recent version; running the latest one gives you the security fixes. Tags from `7.6.0` onwards stay for now.
 
-- If you pin one of the old tags, change it to a current one (`7.8.1`, or `latest` / `7`) before that date. After removal `docker pull` of the old tag fails.
+- If you pin one of the old tags, change it to a current one (`7.8.5`, or `latest` / `7`) before that date. After removal `docker pull` of the old tag fails.
 - You can jump over several versions: the database schema is upgraded automatically on first start. Tested going directly from 7.3.3 to 7.8.1 (all intermediate steps ran in one start; data and the default admin login were kept), but only on a small database without photos or finance data. **Back up the database and the `config`, `Images` and `backup` volumes first**, and read the ChurchCRM release notes if you skip many versions.
 - If you keep an old `config` volume, check `Config.php` in it: images up to about 7.3 wrote an empty `$URL[0] = '';`, which makes the new version fail with "Invalid URL". Set it to your public address, e.g. `$URL[0] = 'https://crm.example.com/';`.
 - Pre-release tags such as `7.7.1-rc2` and `7.7.1-rc3` are test builds and will be removed earlier, without notice.
@@ -137,7 +137,7 @@ Since 7.8.1 the plain tags (`latest`, `7`, `7.x.y`) are built on the official im
 | `latest` | Latest stable version (auto-updates) | amd64, arm64 |
 | `7` | Latest 7.x version | amd64, arm64 |
 | `7.7.0` | Specific ChurchCRM version | amd64, arm64 |
-| `<version>-official` | **Recommended.** Official `churchcrm/crm:<version>-php8-apache` + thin layer (see above), e.g. `7.8.1-official`. Published manually, never moves `latest` | amd64, arm64 |
+| `<version>-official` | **Recommended.** Official `churchcrm/crm:<version>-php8-apache` + thin layer (see above), e.g. `7.8.5-official`. Published manually, never moves `latest` | amd64, arm64 |
 
 ---
 
